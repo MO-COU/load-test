@@ -3,7 +3,6 @@ package com.example.demo.coupon.application;
 import com.example.demo.common.exception.CouponNotFoundException;
 import com.example.demo.common.exception.DuplicateIssueException;
 import com.example.demo.common.exception.SoldOutException;
-import com.example.demo.coupon.domain.Coupon;
 import com.example.demo.coupon.domain.CouponIssue;
 import com.example.demo.coupon.domain.CouponIssueRepository;
 import com.example.demo.coupon.domain.CouponRepository;
@@ -37,15 +36,14 @@ public class CouponIssueService {
 
 	@Transactional
 	public void issue(Long couponId, Long memberId) {
-		Coupon coupon = couponRepository.findById(couponId)
+		// 쿠폰이 없을 때는 404로 구분한다.
+		couponRepository.findById(couponId)
 			.orElseThrow(() -> new CouponNotFoundException(couponId));
 
-		if (coupon.isSoldOut()) {
+		// 재고 확인과 증가를 한 번의 UPDATE로 처리한다.
+		if (couponRepository.increaseIssuedCountIfAvailable(couponId) == 0) {
 			throw new SoldOutException(couponId);
 		}
-
-		// Dirty Checking 으로 트랜잭션 종료 시 UPDATE 된다.
-		coupon.increaseIssuedCount();
 
 		try {
 			// saveAndFlush 로 INSERT 시점을 고정한다.
