@@ -3,6 +3,11 @@
 같은 요구사항을 6가지 동시성 제어 방식으로 구현하고 동일 조건에서 비교한다.
 `main`은 동시성 제어를 하지 않는 baseline이며, 각 방식은 `exp/*` 브랜치에서 구현한다.
 
+## Atomic Update
+
+`issued_count < total_quantity` 조건을 포함한 UPDATE 한 번으로 재고를 차감한다.
+동시 요청 실험 결과와 사용자 대기 시간 해석은 [Atomic Update 실험 결과](docs/atomic-update-result.md)에서 확인한다.
+
 ## 사전 준비
 
 - JDK 21
