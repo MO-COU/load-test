@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "coupon")
@@ -27,10 +28,9 @@ public class Coupon {
 	@Column(name = "issued_count", nullable = false)
 	private int issuedCount;
 
-	// coupon.version 컬럼은 스키마에 있지만 baseline은 매핑하지 않는다.
-	// 낙관적 락 브랜치에서만 아래를 추가한다.
-	//   @Version
-	//   private Long version;
+	@Version
+	@Column(name = "version", nullable = false)
+	private Long version;
 
 	protected Coupon() {
 	}
