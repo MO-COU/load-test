@@ -14,10 +14,8 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --default-time-zone=+09:00
-      - --max-connections=500
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./docker/mysql/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot1234"]
       interval: 5s
@@ -29,7 +27,7 @@ services:
     container_name: coupon-redis
     ports:
       - "6379:6379"
-    command: redis-server --maxmemory 512mb --maxmemory-policy noeviction
+    command: redis-server --maxmemory-policy noeviction
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
