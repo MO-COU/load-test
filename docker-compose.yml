@@ -16,14 +16,20 @@ services:
       - --default-time-zone=+09:00
     volumes:
       - mysql-data:/var/lib/mysql
+      # 볼륨이 비어 있을 때만 실행된다. 스키마를 바꿨으면 docker compose down -v 필요.
+      - ./scripts/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./scripts/db/data.sql:/docker-entrypoint-initdb.d/02-data.sql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot1234"]
+      # -h 127.0.0.1 로 TCP 접속을 강제한다.
+      # localhost 로 두면 소켓으로 붙기 때문에, 초기화 스크립트를 실행하는
+      # 네트워크 꺼진 임시 서버에도 ping 이 성공해서 초기화 도중에 healthy 로 뜬다.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot1234"]
       interval: 5s
       timeout: 5s
       retries: 20
 
   redis:
-    image: redis:7.2-alpine
+    image: redis:8.8.1-alpine
     container_name: coupon-redis
     ports:
       - "6379:6379"
