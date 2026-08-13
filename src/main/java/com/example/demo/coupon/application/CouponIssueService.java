@@ -13,13 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Baseline: 동시성 제어를 하지 않는다.
+ * 비관적 락 (SELECT ... FOR UPDATE)
  *
- * 락, 조건부 UPDATE, Redis, synchronized 를 일절 쓰지 않으므로
- * 재고 확인과 증가 사이에 경합이 발생하면 초과 발급이 난다.
- * 그것이 이 구현의 목적이며, 나머지 6개 방식의 비교 기준이 된다.
+ * 쿠폰 행을 읽는 시점에 배타 락을 걸어, 재고 확인부터 증가까지를 직렬화한다.
+ * 락은 트랜잭션 커밋 시점에 풀리므로 그 사이 다른 요청은 대기한다.
  *
- * 각 실험 브랜치는 이 클래스만 바꾸고 나머지는 건드리지 않는다.
+ * baseline 대비 바뀐 것은 findById -> findWithLockById 한 줄뿐이다.
  */
 @Service
 public class CouponIssueService {
@@ -37,7 +36,8 @@ public class CouponIssueService {
 
 	@Transactional
 	public void issue(Long couponId, Long memberId) {
-		Coupon coupon = couponRepository.findById(couponId)
+		// 여기서 배타 락을 획득한다. 이후 구간은 이 쿠폰에 대해 한 번에 하나만 실행된다.
+		Coupon coupon = couponRepository.findWithLockById(couponId)
 			.orElseThrow(() -> new CouponNotFoundException(couponId));
 
 		if (coupon.isSoldOut()) {
@@ -45,6 +45,7 @@ public class CouponIssueService {
 		}
 
 		// Dirty Checking 으로 트랜잭션 종료 시 UPDATE 된다.
+		// 락 덕분에 다른 트랜잭션이 같은 값을 읽고 덮어쓰는 일이 없다.
 		coupon.increaseIssuedCount();
 
 		try {
