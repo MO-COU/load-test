@@ -19,6 +19,9 @@ services:
       # 볼륨이 비어 있을 때만 실행된다. 스키마를 바꿨으면 docker compose down -v 필요.
       - ./scripts/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./scripts/db/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+      # reset.sql 을 컨테이너 안에서 source 로 실행하기 위한 마운트.
+      # 셸 리다이렉션(<)을 쓰지 않으므로 PowerShell 에서도 동일하게 동작한다.
+      - ./scripts/db:/scripts:ro
     healthcheck:
       # -h 127.0.0.1 로 TCP 접속을 강제한다.
       # localhost 로 두면 소켓으로 붙기 때문에, 초기화 스크립트를 실행하는

@@ -5,14 +5,17 @@
 
 ## 사전 준비
 
-- JDK 21, Docker, [k6](https://k6.io) (`brew install k6`)
+- JDK 21
+- Docker
+- [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/)
 
 ## 실행
 
 ```bash
 docker compose up -d
 docker compose ps          # mysql, redis 모두 healthy 확인
-./gradlew bootRun
+
+./gradlew bootRun          # Windows(PowerShell/cmd): .\gradlew.bat bootRun
 ```
 
 스키마와 시드는 컨테이너가 처음 뜰 때 자동으로 적용된다.
@@ -37,9 +40,9 @@ POST /issue?couponId=1&memberId=100
 
 매번 이 순서를 지킨다. **초기화를 빠뜨리면 이전 결과가 섞인다.**
 
-```bash
+```
 # 1. 초기화
-docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon < scripts/db/reset.sql
+docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon -e "source /scripts/reset.sql"
 docker compose exec redis redis-cli FLUSHALL
 
 # Redis 방식 브랜치만 추가
@@ -49,15 +52,13 @@ docker compose exec redis redis-cli SET coupon:stock:1 1000
 k6 run load-test/rush.js
 
 # 3. 결과 확인
-docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon -e "
-  SELECT issued_count FROM coupon WHERE coupon_id = 1;
-  SELECT COUNT(*) AS issued FROM coupon_issue WHERE coupon_id = 1;
-  SELECT member_id, COUNT(*) FROM coupon_issue WHERE coupon_id = 1
-    GROUP BY member_id HAVING COUNT(*) > 1;
-"
+docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon -e "source /scripts/verify.sql"
 ```
 
-`issued_count`(카운터)와 `COUNT(*)`(실제 행)가 다르면 그 자체가 발견이다. 반드시 기록한다.
+SQL 파일을 컨테이너 안에서 `source` 로 실행하므로 셸 리다이렉션이 필요 없다.
+bash, zsh, PowerShell, cmd 어디서든 같은 명령을 쓴다.
+
+`issued_count`(카운터)와 `issued_rows`(실제 행)가 다르면 그 자체가 발견이다. 반드시 기록한다.
 
 ## 판정 기준
 
@@ -90,6 +91,7 @@ baseline은 통과하지 못하는 것이 정상이다. 비교 기준점으로 �
 scripts/db/schema.sql   테이블 (최초 1회 자동 실행)
 scripts/db/data.sql     시드 (최초 1회 자동 실행)
 scripts/db/reset.sql    매 테스트 전 초기화
+scripts/db/verify.sql   테스트 후 결과 확인
 load-test/rush.js       k6 스크립트
 ```
 

@@ -1,6 +1,6 @@
 -- 매 부하테스트 직전에 실행한다. 빠뜨리면 이전 실행 결과가 섞인다.
 --
---   docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon < scripts/db/reset.sql
+--   docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon -e "source /scripts/reset.sql"
 --   docker compose exec redis redis-cli FLUSHALL
 --   # Redis 방식 브랜치만 추가
 --   docker compose exec redis redis-cli SET coupon:stock:1 1000
