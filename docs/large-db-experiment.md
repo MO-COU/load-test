@@ -42,6 +42,19 @@
 - 성능 개선 목적의 인덱스는 이 단계에서 추가하지 않는다.
 - 각 대표 기능의 데이터 분포, 요청 수, 동시성 및 성공 기준을 기록한다.
 
+### 1-1. 단계 데이터 준비
+
+대용량 전용 MySQL 컨테이너가 실행 중인 상태에서 아래 명령으로 원하는 단계의
+회원 수와 발급 이력(회원 수의 3배)을 재생성한다.
+
+```bash
+docker compose -f docker-compose.large-db.yml exec -T mysql-large mysql -ucoupon_large -pcoupon-large-1234 --init-command="SET @member_count = 100000" coupon_large -e "source /scripts/large-db/seed-stage.sql"
+```
+
+`@member_count` 값만 바꾸어 Stage 2~4에 사용한다. 이 스크립트는 이전 단계 데이터를
+초기화한 뒤 회원별로 쿠폰 3개에 한 건씩 발급 이력을 생성한다. `ISSUED`와 `USED` 상태는
+각각 절반씩 생성한다.
+
 ### 2. 단계별 측정
 
 각 데이터 단계에서 아래 순서를 동일하게 반복한다.
@@ -72,11 +85,5 @@
 
 ## 다음 작업
 
-대용량 실험 전용 DB 환경을 만든다.
-
-- 별도 MySQL 컨테이너와 볼륨을 정의한다.
-- 기존 DB와 겹치지 않는 포트와 데이터베이스명을 사용한다.
-- 대용량 실험 전용 Spring 프로필을 추가한다.
-- `member` 및 상태 컬럼을 포함한 대용량 실험 전용 스키마를 만든다.
-
-이 작업이 끝나면 Stage 1 데이터(회원 10만, 발급 이력 30만)를 적재하고 첫 Baseline 측정을 시작한다.
+Stage 1 데이터(회원 10만, 발급 이력 30만)를 기준으로 대표 쿼리 4개의 Baseline 측정을 시작한다.
+측정값을 기록한 뒤 같은 절차로 Stage 2 데이터를 적재한다.

@@ -17,6 +17,7 @@ services:
     volumes:
       - mysql-large-data:/var/lib/mysql
       - ./scripts/large-db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./scripts/large-db:/scripts/large-db:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot-large-1234"]
       interval: 5s
