@@ -1,8 +1,7 @@
 // 대용량 DB - 신규 발급 이력 저장(INSERT) 부하.
 // 계약: POST /benchmark/coupon-issues?couponId=4&memberId={memberId}
 //
-// UNIQUE(coupon_id, member_id) 충돌을 피하려고, 실행 전체에서 고유한 memberId를 만든다.
-// 시드된 회원 범위(MEMBER_COUNT) 밖의 "신규 회원"으로 취급해 순수 INSERT 지연만 측정한다.
+// 쿠폰 4는 측정 전 비어 있으므로, 시드된 회원 범위 안에서 고유한 memberId를 사용한다.
 // 반복 실행 전에는 prepare-benchmark.sql로 쿠폰 4를 비운다.
 //
 //   docker compose -f docker-compose.large-db.yml exec -T mysql-large \
@@ -17,16 +16,20 @@ const MEMBER_COUNT = Number(__ENV.MEMBER_COUNT || 100000);
 const COUPON_ID = Number(__ENV.COUPON_ID || 4);
 
 export const options = {
-  vus: Number(__ENV.VUS || 1),
-  duration: __ENV.DURATION || '30s',
+  scenarios: {
+    insert: {
+      executor: 'per-vu-iterations',
+      vus: Number(__ENV.VUS || 1),
+      iterations: Number(__ENV.ITERATIONS_PER_VU || 1000),
+    },
+  },
 };
 
 // API 계약: 신규 발급 저장 성공 시 201 CREATED.
 http.setResponseCallback(http.expectedStatuses(201));
 
 export default function () {
-  // iterationInTest는 실행 전체에서 0부터 증가하는 고유값 → memberId 충돌이 없다.
-  const memberId = MEMBER_COUNT + exec.scenario.iterationInTest + 1;
+  const memberId = (exec.scenario.iterationInTest % MEMBER_COUNT) + 1;
   http.post(
     `${BASE_URL}/benchmark/coupon-issues?couponId=${COUPON_ID}&memberId=${memberId}`
   );
