@@ -65,7 +65,7 @@ docker compose -f docker-compose.large-db.yml exec -T mysql-large mysql -ucoupon
 
 ### 대용량 실험 역할과 작업 범위
 
-#### 애플리케이션·쿼리 담당
+#### 권혁준: 애플리케이션·쿼리·결과 통합
 
 다음 실험 API와 Repository 쿼리를 구현하고 테스트한다. API 경로는 k6 스크립트와의 계약이므로 변경 시 함께 알린다.
 
@@ -79,7 +79,7 @@ docker compose -f docker-compose.large-db.yml exec -T mysql-large mysql -ucoupon
 구현 후에는 느린 조회와 집계에 대해 `EXPLAIN ANALYZE`를 실행하고,
 실행시간·실제 rows·Full Table Scan 여부·사용 인덱스를 `docs/large-db-experiment.md`에 기록한다.
 
-#### 부하 스크립트·DB 상태 담당
+#### 조현빈: 부하 스크립트·DB 상태 준비
 
 다음 파일을 추가하거나 수정한다.
 
@@ -95,6 +95,9 @@ Avg·p95·오류율을 출력한다. INSERT와 UPDATE는 반복 실행 전에
 `prepare-benchmark.sql`로 측정 대상 상태를 복구한다.
 
 측정 결과의 최종 기록은 `docs/large-db-experiment.md`에 반영한다.
+
+조현빈의 작업이 완료되면 권혁준이 해당 브랜치의 변경을 병합한 뒤,
+Stage 1 측정 결과와 실행계획 분석을 `docs/large-db-experiment.md`에 기록한다.
 
 ## API
 
