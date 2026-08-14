@@ -6,7 +6,7 @@ const soldOut = new Counter('sold_out');
 const duplicated = new Counter('duplicated');
 const errors = new Counter('errors');
 
-const MEMBER_POOL = 2000;
+const MEMBER_POOL = 20000;
 
 http.setResponseCallback(http.expectedStatuses(200, 409));
 
@@ -16,7 +16,7 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '60s', target: 2000 },
+        { duration: '60s', target: 20000 },
       ],
       gracefulRampDown: '30s',
     },
@@ -30,7 +30,7 @@ export default function () {
   const memberId = Math.floor(Math.random() * MEMBER_POOL) + 1;
 
   const res = http.post(
-      `http://localhost:8080/issue?couponId=1&memberId=${memberId}`
+      `http://172.31.45.49:8080/issue?couponId=1&memberId=${memberId}`
   );
 
   if (res.status === 200) {
