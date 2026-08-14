@@ -1,0 +1,27 @@
+services:
+  mysql-large:
+    image: mysql:8.0.36
+    container_name: coupon-mysql-large
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root-large-1234
+      MYSQL_DATABASE: coupon_large
+      MYSQL_USER: coupon_large
+      MYSQL_PASSWORD: coupon-large-1234
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+09:00
+    volumes:
+      - mysql-large-data:/var/lib/mysql
+      - ./scripts/large-db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot-large-1234"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  mysql-large-data:

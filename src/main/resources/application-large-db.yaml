@@ -1,0 +1,9 @@
+spring:
+  config:
+    activate:
+      on-profile: large-db
+
+  datasource:
+    url: jdbc:mysql://${LARGE_DB_HOST:localhost}:${LARGE_DB_PORT:3307}/${LARGE_DB_NAME:coupon_large}?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    username: ${LARGE_DB_USERNAME:coupon_large}
+    password: ${LARGE_DB_PASSWORD:coupon-large-1234}

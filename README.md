@@ -23,6 +23,24 @@ docker compose ps          # mysql, redis 모두 healthy 확인
 > **스키마를 바꿨다면** `docker compose down -v` 로 볼륨까지 지워야 다시 적용된다.
 > `-v` 없이 재기동하면 예전 스키마로 계속 돈다.
 
+## 대용량 DB 실험 환경
+
+기존 동시성 실험 DB(`3306`, `coupon`)와 분리된 MySQL을 사용한다.
+대용량 DB는 `3307`, `coupon_large`, `coupon-mysql-large`, `mysql-large-data`를 사용하므로
+기존 실험의 컨테이너와 데이터에 영향을 주지 않는다.
+
+```bash
+docker compose -f docker-compose.large-db.yml up -d
+./gradlew bootRun --args='--spring.profiles.active=large-db'
+```
+
+Windows PowerShell에서는 `./gradlew` 대신 `./gradlew.bat`을 사용한다.
+대용량 실험을 끝내고 데이터 볼륨까지 제거하려면 다음 명령을 사용한다.
+
+```bash
+docker compose -f docker-compose.large-db.yml down -v
+```
+
 ## API
 
 ```
