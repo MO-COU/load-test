@@ -41,6 +41,61 @@ Windows PowerShell에서는 `./gradlew` 대신 `./gradlew.bat`을 사용한다.
 docker compose -f docker-compose.large-db.yml down -v
 ```
 
+### 협업 시작 절차
+
+대용량 실험 작업은 `experiment/large-db-benchmark`을 기준 브랜치로 사용한다.
+각 작업자는 기준 브랜치에서 자신의 작업 브랜치를 만든다. Docker 볼륨은 Git으로 공유되지 않으므로,
+각자 아래 명령으로 로컬 대용량 DB와 Stage 1 데이터를 준비한다.
+
+```powershell
+git fetch origin
+git switch -c feature/large-db-load-scripts origin/experiment/large-db-benchmark
+
+docker compose -f docker-compose.large-db.yml up -d
+docker compose -f docker-compose.large-db.yml exec -T mysql-large mysql -ucoupon_large -pcoupon-large-1234 --init-command="SET @member_count = 100000" coupon_large -e "source /scripts/large-db/seed-stage.sql"
+```
+
+적재 상태는 다음 명령으로 확인한다.
+
+```powershell
+docker compose -f docker-compose.large-db.yml exec -T mysql-large mysql -ucoupon_large -pcoupon-large-1234 coupon_large -e "SELECT COUNT(*) AS member_count FROM member; SELECT COUNT(*) AS coupon_issue_count FROM coupon_issue; SELECT status, COUNT(*) AS issue_count FROM coupon_issue GROUP BY status;"
+```
+
+기대값은 회원 `100,000`, 발급 이력 `300,000`, 상태별 `ISSUED 150,000`·`USED 150,000`이다.
+
+### 대용량 실험 역할과 작업 범위
+
+#### 애플리케이션·쿼리 담당
+
+다음 실험 API와 Repository 쿼리를 구현하고 테스트한다. API 경로는 k6 스크립트와의 계약이므로 변경 시 함께 알린다.
+
+| 기능 | API 계약 | 구현 내용 |
+|---|---|---|
+| 회원별 조회 | `GET /benchmark/members/{memberId}/coupon-issues` | 해당 회원의 쿠폰 이력을 조회한다. |
+| 신규 발급 저장 | `POST /benchmark/coupon-issues?couponId=4&memberId={memberId}` | 쿠폰 4에 신규 발급 이력을 저장한다. |
+| 상태 변경 | `PATCH /benchmark/coupon-issues/status?couponId={couponId}&memberId={memberId}` | 대상 이력의 상태를 `ISSUED`에서 `USED`로 변경한다. |
+| 발급 건수 집계 | `GET /benchmark/coupon-issues/summary` | 쿠폰별·상태별 발급 건수를 집계한다. |
+
+구현 후에는 느린 조회와 집계에 대해 `EXPLAIN ANALYZE`를 실행하고,
+실행시간·실제 rows·Full Table Scan 여부·사용 인덱스를 `docs/large-db-experiment.md`에 기록한다.
+
+#### 부하 스크립트·DB 상태 담당
+
+다음 파일을 추가하거나 수정한다.
+
+- `scripts/large-db/prepare-benchmark.sql`: 쿠폰 4를 INSERT 측정용으로 준비하고, 각 측정 전후 데이터 상태를 복구한다.
+- `scripts/large-db/verify-benchmark.sql`: 회원 수, 발급 이력 수, 쿠폰 4 발급 이력 수, 상태별 건수를 확인한다.
+- `load-test/large-db-read.js`: 회원별 조회 부하를 실행한다.
+- `load-test/large-db-insert.js`: 쿠폰 4 신규 발급 저장 부하를 실행한다.
+- `load-test/large-db-update.js`: `ISSUED` 상태 변경 부하를 실행한다.
+- `load-test/large-db-summary.js`: 쿠폰별·상태별 집계 부하를 실행한다.
+
+각 k6 스크립트는 `1`, `10`, `50 VU`를 동일한 실행 조건으로 설정할 수 있어야 하며,
+Avg·p95·오류율을 출력한다. INSERT와 UPDATE는 반복 실행 전에
+`prepare-benchmark.sql`로 측정 대상 상태를 복구한다.
+
+측정 결과의 최종 기록은 `docs/large-db-experiment.md`에 반영한다.
+
 ## API
 
 ```
