@@ -31,6 +31,8 @@ http.setResponseCallback(http.expectedStatuses(201));
 export default function () {
   const memberId = (exec.scenario.iterationInTest % MEMBER_COUNT) + 1;
   http.post(
-    `${BASE_URL}/benchmark/coupon-issues?couponId=${COUPON_ID}&memberId=${memberId}`
+    `${BASE_URL}/benchmark/coupon-issues?couponId=${COUPON_ID}&memberId=${memberId}`,
+      null,
+      { tags: { name: 'benchmark_insert' } }
   );
 }

@@ -41,6 +41,7 @@ export default function () {
 
   http.patch(
     `${BASE_URL}/benchmark/coupon-issues/status?couponId=${couponId}&memberId=${memberId}`,
-    null
+      null,
+      { tags: { name: 'benchmark_update' } }
   );
 }
