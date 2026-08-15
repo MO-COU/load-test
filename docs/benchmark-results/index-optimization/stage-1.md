@@ -31,6 +31,16 @@ Index lookup on coupon_issue using idx_coupon_issue_member_issued_at
 (member_id=50000), actual time=0.025..0.0263ms, rows=3
 ```
 
+## 집계 실행계획
+
+300,000행을 Full Scan한 뒤 임시 테이블로 집계하고 정렬했다. 조회 인덱스는 사용되지 않았다.
+
+```text
+Table scan on coupon_issue, actual time=0.0395..46.8ms, rows=300000
+Aggregate using temporary table, actual time=148ms, rows=6
+Sort: coupon_id, status, actual time=148ms, rows=6
+```
+
 ## INSERT·UPDATE·집계 결과
 
 오류율은 모든 측정에서 0%다. INSERT와 UPDATE는 VU당 1,000회를 실행했다.

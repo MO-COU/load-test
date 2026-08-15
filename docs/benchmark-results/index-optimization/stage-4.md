@@ -31,6 +31,16 @@ Index lookup on coupon_issue using idx_coupon_issue_member_issued_at
 (member_id=500000), actual time=0.0283..0.0294ms, rows=3
 ```
 
+## 집계 실행계획
+
+3,000,000행을 Full Scan한 뒤 임시 테이블로 집계하고 정렬했다. 조회 인덱스는 사용되지 않았다.
+
+```text
+Table scan on coupon_issue, actual time=0.046..651ms, rows=3000000
+Aggregate using temporary table, actual time=1678ms, rows=6
+Sort: coupon_id, status, actual time=1678ms, rows=6
+```
+
 ## INSERT·UPDATE·집계 결과
 
 오류율은 모든 측정에서 0%다. INSERT와 UPDATE는 VU당 1,000회를 실행했다.
@@ -43,8 +53,8 @@ Index lookup on coupon_issue using idx_coupon_issue_member_issued_at
 | UPDATE | 1 | 9.30ms | 9.03ms | 12.87ms | 12.43ms | 105.85 req/s | 108.90 req/s |
 | UPDATE | 10 | 13.25ms | 14.60ms | 17.74ms | 20.04ms | 740.52 req/s | 671.05 req/s |
 | UPDATE | 50 | 24.28ms | 24.07ms | 32.30ms | 32.59ms | 2,020.11 req/s | 2,039.71 req/s |
-| 집계 | 1 | 1.46s | 462.39ms | 1.56s | 497.66ms | 0.68 req/s | 2.16 req/s |
-| 집계 | 10 | 2.55s | 747.99ms | 2.83s | 786.81ms | 3.90 req/s | 13.24 req/s |
-| 집계 | 50 | 12.22s | 3.58s | 13.11s | 4.41s | 3.99 req/s | 13.65 req/s |
+| 집계 | 1 | 1.46s | 1.56s | 1.56s | 1.67s | 0.68 req/s | 0.64 req/s |
+| 집계 | 10 | 2.55s | 2.82s | 2.83s | 3.12s | 3.90 req/s | 3.48 req/s |
+| 집계 | 50 | 12.22s | 13.37s | 13.11s | 15.94s | 3.99 req/s | 3.50 req/s |
 
 조회 인덱스는 집계의 `coupon_id, status` 그룹화에는 사용되지 않으므로, 집계 차이는 로컬 실행 환경 변동을 포함해 해석한다.

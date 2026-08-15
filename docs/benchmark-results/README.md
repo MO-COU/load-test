@@ -11,6 +11,7 @@ benchmark-results/
 │   ├── stage-3.md            # MEMBER 500,000 / COUPON_ISSUE 1,500,000
 │   └── stage-4.md            # MEMBER 1,000,000 / COUPON_ISSUE 3,000,000
 └── index-optimization/       # 인덱스 적용 후 재측정 결과를 기록할 위치
+    ├── README.md              # 공통 측정 조건과 결과 해석
     ├── stage-1.md            # MEMBER 100,000 / COUPON_ISSUE 300,000
     ├── stage-2.md            # MEMBER 300,000 / COUPON_ISSUE 900,000
     ├── stage-3.md            # MEMBER 500,000 / COUPON_ISSUE 1,500,000

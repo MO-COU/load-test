@@ -22,6 +22,19 @@
 | 10 | 97.68% | 97.52% | 42.51x |
 | 50 | 98.48% | 98.28% | 66.08x |
 
+## 실행계획
+
+조회는 3건 인덱스 조회, 집계는 900,000행 Full Scan 후 임시 테이블 집계·정렬로 실행됐다.
+
+```text
+조회: idx_coupon_issue_member_issued_at index lookup
+(member_id=150000), actual time=0.0603..0.0625ms, rows=3
+
+집계: Table scan on coupon_issue, actual time=0.112..149ms, rows=900000
+      Aggregate using temporary table, actual time=474ms, rows=6
+      Sort: coupon_id, status, actual time=474ms, rows=6
+```
+
 ## INSERT·UPDATE·집계 결과
 
 오류율은 모든 측정에서 0%다. INSERT와 UPDATE는 VU당 1,000회를 실행했다.
