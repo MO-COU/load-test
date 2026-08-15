@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS coupon_issue (
     status          VARCHAR(20)  NOT NULL,
     issued_at       DATETIME(6)  NOT NULL,
     PRIMARY KEY (coupon_issue_id),
-    -- 무결성과 현재 발급 로직 호환을 위한 제약이다. 성능 개선용 인덱스는 아직 추가하지 않는다.
-    UNIQUE KEY uk_coupon_issue_coupon_member (coupon_id, member_id)
+    -- 무결성과 현재 발급 로직 호환을 위한 제약이다.
+    UNIQUE KEY uk_coupon_issue_coupon_member (coupon_id, member_id),
+    -- 회원별 쿠폰 조회의 WHERE member_id와 ORDER BY issued_at DESC를 함께 지원한다.
+    KEY idx_coupon_issue_member_issued_at (member_id, issued_at DESC)
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
