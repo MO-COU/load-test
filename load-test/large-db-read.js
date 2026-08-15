@@ -21,5 +21,8 @@ http.setResponseCallback(http.expectedStatuses(200));
 
 export default function () {
   const memberId = Math.floor(Math.random() * MEMBER_COUNT) + 1;
-  http.get(`${BASE_URL}/benchmark/members/${memberId}/coupon-issues`);
+  http.get(
+    `${BASE_URL}/benchmark/members/${memberId}/coupon-issues`,
+    { tags: { name: 'benchmark_read' } }
+  );
 }

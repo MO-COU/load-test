@@ -11,7 +11,10 @@ benchmark-results/
 │   ├── stage-3.md            # MEMBER 500,000 / COUPON_ISSUE 1,500,000
 │   └── stage-4.md            # MEMBER 1,000,000 / COUPON_ISSUE 3,000,000
 └── index-optimization/       # 인덱스 적용 후 재측정 결과를 기록할 위치
-    └── stage-4.md            # MEMBER 1,000,000 / COUPON_ISSUE 3,000,000 조회 인덱스 가설 결과
+    ├── stage-1.md            # MEMBER 100,000 / COUPON_ISSUE 300,000
+    ├── stage-2.md            # MEMBER 300,000 / COUPON_ISSUE 900,000
+    ├── stage-3.md            # MEMBER 500,000 / COUPON_ISSUE 1,500,000
+    └── stage-4.md            # MEMBER 1,000,000 / COUPON_ISSUE 3,000,000
 ```
 
 `baseline`은 PK와 무결성 제약에 필요한 인덱스만 둔 상태의 결과다. 이후 인덱스를 적용한
