@@ -40,3 +40,14 @@ server:
       # 통일 사항.
       max: ${TOMCAT_MAX_THREADS:200}
     accept-count: ${TOMCAT_ACCEPT_COUNT:100}
+    # 통일 사항. 기본값 8192 로는 VU 20000 의 연결을 다 받지 못해
+    # 초과분이 거부되고, 락 전략과 무관한 에러가 결과를 오염시킨다.
+    max-connections: ${TOMCAT_MAX_CONNECTIONS:30000}
+
+# 측정용. 커넥션 풀과 워커 스레드 사용률은 k6 로는 볼 수 없어
+# "자원이 고갈됐다 / 확보됐다" 를 증명하려면 이 엔드포인트가 필요하다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_EXPOSURE:prometheus,metrics,health}

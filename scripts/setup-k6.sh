@@ -40,7 +40,7 @@ command -v git >/dev/null || sudo apt-get install -y git
 if command -v k6 >/dev/null; then
 	echo "   k6 이미 설치됨 ($(k6 version))"
 else
-	sudo apt-get install -y gnupg
+	command -v gpg >/dev/null || sudo apt-get install -y gnupg
 	sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
 		--keyserver hkp://keyserver.ubuntu.com:80 \
 		--recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
