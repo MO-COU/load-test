@@ -30,6 +30,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Service
 public class CouponIssueService {
 
+	private static final int MAX_RETRY = 5;	// 재시도 요청 5회
+
 	private final CouponRepository couponRepository;
 	private final CouponIssueRepository couponIssueRepository;
 	private final TransactionTemplate transactionTemplate;	// 새 트랜잭션을 위함
@@ -45,7 +47,9 @@ public class CouponIssueService {
 	}
 
 	public void issue(Long couponId, Long memberId) {
-		while (true) {
+		ObjectOptimisticLockingFailureException lastFailure = null;
+
+		for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
 			try {
 				transactionTemplate.executeWithoutResult(
 					status -> issueInNewTransaction(couponId, memberId)
@@ -53,8 +57,12 @@ public class CouponIssueService {
 				return;
 			} catch (ObjectOptimisticLockingFailureException e) {
 				// version 충돌. 재고/중복 여부는 아직 확정되지 않았으므로 재시도한다.
+				lastFailure = e;
 			}
 		}
+
+		// 재시도 한도 초과. 컨트롤러가 이 예외를 따로 잡지 않으므로 5xx로 응답된다.
+		throw lastFailure;
 	}
 
 	private void issueInNewTransaction(Long couponId, Long memberId) {
