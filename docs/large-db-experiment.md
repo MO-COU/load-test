@@ -93,10 +93,11 @@ docker compose -f docker-compose.large-db.yml exec -T mysql-large mysql -ucoupon
 
 Baseline 측정은 Stage 1~4에서 완료했다. 상세 결과는 아래 문서를 사용한다.
 
-- [Stage 1: 회원 10만 / 발급 이력 30만](benchmark-results/stage-1.md)
-- [Stage 2: 회원 30만 / 발급 이력 90만](benchmark-results/stage-2.md)
-- [Stage 3: 회원 50만 / 발급 이력 150만](benchmark-results/stage-3.md)
-- [Stage 4: 회원 100만 / 발급 이력 300만](benchmark-results/stage-4.md)
+- [결과 문서 구조](benchmark-results/README.md)
+- [Baseline Stage 1: 회원 10만 / 발급 이력 30만](benchmark-results/baseline/stage-1.md)
+- [Baseline Stage 2: 회원 30만 / 발급 이력 90만](benchmark-results/baseline/stage-2.md)
+- [Baseline Stage 3: 회원 50만 / 발급 이력 150만](benchmark-results/baseline/stage-3.md)
+- [Baseline Stage 4: 회원 100만 / 발급 이력 300만](benchmark-results/baseline/stage-4.md)
 
 Stage 4에서 확인된 기준선은 다음과 같다.
 
@@ -136,17 +137,3 @@ Stage 4에서 확인된 기준선은 다음과 같다.
   → expires_at 기반 Spring Batch 측정
   → 클라우드 환경에서 20,000 VU 동시 발급·잠금 경합 측정
 ```
-
-## 다음 작업
-
-현재 통합 브랜치 `experiment/large-db-benchmark`에서 개선 전 기준선을 보존한다.
-이 브랜치에서 `feature/large-db-index-optimization`을 분기한 뒤, 아래 순서로 진행한다.
-
-1. 조회 인덱스 `(member_id, issued_at DESC)`만 적용한다.
-2. Stage 4 조건(회원 100만, 발급 이력 300만)에서 조회 1·10·50 VU를 재측정한다.
-3. `EXPLAIN ANALYZE`로 Full Scan 제거 여부와 실제 rows·실행시간을 Baseline과 비교한다.
-4. 결과를 기록한 뒤 집계 인덱스 `(coupon_id, status)`를 별도 가설로 검토·측정한다.
-
-인덱스 개선 결과는 `feature/large-db-index-optimization`에서 검증한 뒤
-`experiment/large-db-benchmark`으로 병합한다. 모든 대용량 실험이 끝나면
-`experiment/large-db-benchmark`에서 `main`으로 최종 PR을 생성한다.

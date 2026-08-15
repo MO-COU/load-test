@@ -1,4 +1,6 @@
-# Stage 1 측정 결과
+# Baseline Stage 1 측정 결과
+
+측정 조건: 성능 개선용 인덱스 미적용(PK·무결성 제약 인덱스만 적용)
 
 데이터: MEMBER 100,000 / COUPON_ISSUE 300,000
 
