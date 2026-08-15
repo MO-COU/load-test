@@ -1,8 +1,5 @@
-// 로컬 정확성 확인용. 성능 수치는 이 파일로 재지 않는다.
+// 로컬 정합성 확인용. 성능 수치는 이 파일로 재지 않는다.
 // k6·앱·MySQL·Redis 가 한 대에서 CPU 를 나눠 쓰므로 처리량이 왜곡된다.
-//
-// 회원을 랜덤으로 뽑아 같은 회원의 요청이 동시에 겹치게 만든다.
-// EC2 측정용 rush-remote.js 는 회원이 매번 달라 이 겹침이 없다.
 //
 // 실행 전 초기화
 //   docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon -e "source /scripts/reset.sql"
@@ -21,6 +18,8 @@ const soldOut = new Counter('sold_out');
 const duplicated = new Counter('duplicated');
 const errors = new Counter('errors');
 
+// 재고보다 많아야 품절이 나고, VU 수와 같아야 회원이 겹쳐
+// 같은 회원의 동시 요청(중복 발급 경합)이 만들어진다.
 const MEMBER_POOL = 2000;
 
 http.setResponseCallback(http.expectedStatuses(200, 409));
@@ -28,12 +27,12 @@ http.setResponseCallback(http.expectedStatuses(200, 409));
 export const options = {
   scenarios: {
     rush: {
-      executor: 'ramping-vus',
-      startVUs: 0,
-      stages: [
-        { duration: '60s', target: 2000 },
-      ],
-      gracefulRampDown: '30s',
+      // 램프업을 쓰면 재고가 저부하 구간에서 말라 경합이 안 일어난다.
+      // 전원이 동시에 한 번씩 요청해 재고 경계를 최대 경합에서 지나게 한다.
+      executor: 'per-vu-iterations',
+      vus: MEMBER_POOL,
+      iterations: 1,
+      maxDuration: '60s',
     },
   },
   thresholds: {
@@ -47,9 +46,7 @@ export default function () {
   const res = http.post(
       `http://localhost:8080/issue?couponId=1&memberId=${memberId}`,
       null,
-      // URL 에 memberId 가 들어가면 k6 가 URL 마다 메트릭을 따로 만든다.
-      // 회원 2000명이면 시계열이 2000배가 되어 k6 자체가 병목이 되므로
-      // 이름을 하나로 고정한다.
+      // 태그가 없으면 k6 가 URL 마다 메트릭을 따로 만들어 스스로 병목이 된다.
       { tags: { name: 'issue' } }
   );
 
