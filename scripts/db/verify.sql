@@ -7,20 +7,22 @@
 --
 --   docker compose exec -T redis redis-cli GET coupon:stock:1
 
+-- 컬럼명을 영문으로 두는 이유: 터미널은 한글을 두 칸으로 그리는데
+-- MySQL 은 한 글자로 세어 표 정렬이 어긋난다.
 SELECT
-	c.total_quantity                          AS `재고`,
-	c.issued_count                            AS `카운터`,
-	r.issued_rows                             AS `실제행수`,
-	d.dup_members                             AS `중복회원`,
+	c.total_quantity                          AS stock,
+	c.issued_count                            AS counter,
+	r.issued_rows                             AS issued_rows,
+	d.dup_members                             AS dup_members,
 	-- 카운터가 아닌 행 수로 판정한다. 재고를 Redis 가 관리하는 브랜치는
 	-- coupon.issued_count 를 쓰지 않아 카운터로는 판정할 수 없다.
-	IF(r.issued_rows > c.total_quantity, 'FAIL', 'PASS')  AS `초과발급`,
+	IF(r.issued_rows > c.total_quantity, 'FAIL', 'PASS')  AS oversell,
 	-- 카운터를 안 쓰면 0 으로 남으므로 N/A. 값이 있는데 행 수와 다르면 버그.
 	IF(c.issued_count = 0, 'N/A',
-	   IF(c.issued_count = r.issued_rows, 'PASS', 'FAIL'))  AS `카운터일치`,
-	IF(d.dup_members > 0,                    'FAIL', 'PASS')  AS `중복발급`,
-	-- Redis 방식 브랜치는 실제 Redis 재고가 이 값과 같아야 한다.
-	c.total_quantity - r.issued_rows          AS `Redis재고_기대값`
+	   IF(c.issued_count = r.issued_rows, 'PASS', 'FAIL'))  AS counter_ok,
+	IF(d.dup_members > 0,                    'FAIL', 'PASS')  AS duplicate,
+	-- redis-lua, redis-watch 만 의미가 있다. 실제 Redis 재고가 이 값과 같아야 한다.
+	c.total_quantity - r.issued_rows          AS redis_expect
 FROM coupon c
 CROSS JOIN (
 	SELECT COUNT(*) AS issued_rows

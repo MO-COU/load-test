@@ -123,17 +123,17 @@ bash, zsh, PowerShell, cmd 어디서든 같은 명령을 쓴다.
 `verify.sql` 이 PASS/FAIL 로 찍어준다.
 
 ```
-재고   카운터  실제행수  중복회원  초과발급  카운터일치  중복발급  Redis재고_기대값
-1000   1000    1000      0        PASS      PASS        PASS      0
+stock  counter  issued_rows  dup_members  oversell  counter_ok  duplicate  redis_expect
+1000   1000     1000         0            PASS      PASS        PASS       0
 ```
 
 | 항목 | 기준 | 의미 |
 |---|---|---|
-| 초과발급 | PASS | 발급 행 수가 재고를 넘지 않음 |
-| 중복발급 | PASS | 한 회원이 2장 받지 않음 |
-| 카운터일치 | PASS 또는 N/A | 롤백·보상이 어긋나지 않음. Redis 브랜치는 카운터를 안 써서 N/A |
-| Redis 재고 | `GET` == 기대값 | 보상 로직이 재고를 되돌렸음 |
-| Redis 명단 | `SCARD` == 실제행수 | 받지도 못했는데 등록된 회원이 없음 |
+| `oversell` | PASS | 발급 행 수가 재고를 넘지 않음 |
+| `duplicate` | PASS | 한 회원이 2장 받지 않음 |
+| `counter_ok` | PASS 또는 N/A | 롤백·보상이 어긋나지 않음. Redis 브랜치는 카운터를 안 써서 N/A |
+| `redis_expect` | `GET` 과 일치 | 보상 로직이 재고를 되돌렸음 |
+| `SCARD` | `issued_rows` 와 일치 | 받지도 못했는데 등록된 회원이 없음 |
 | 에러 | k6 `errors` 0 | 5xx 없음 |
 
 동시성 버그는 확률적이라 **한 번으로는 놓친다.** 여러 번 돌려 매번 확인한다.
