@@ -25,6 +25,17 @@ docker compose ps          # mysql, redis 모두 healthy 확인
 
 ## 대용량 DB 실험 환경
 
+대용량 DB 실험의 통합 브랜치는 `experiment/large-db-benchmark`이다. 이 실험은 발급 이력이
+증가할 때 회원별 조회와 상태별 집계가 언제·왜 느려지는지 확인하고, 인덱스 개선 전후를 비교한다.
+
+- 기준선 결과: [대용량 DB 성능 실험 기준](docs/large-db-experiment.md)
+- 단계별 측정값: [`docs/benchmark-results`](docs/benchmark-results)
+- 현재 완료 범위: 회원 10만~100만, 발급 이력 30만~300만의 조회·INSERT·UPDATE·집계 Baseline
+- 다음 작업: `feature/large-db-index-optimization`에서 조회 인덱스를 적용하고 Stage 4 조건으로 재측정
+
+현재 실험은 조회·집계 구조의 사전 검증이다. MVP ERD 확정 후에는 재고 차감, 상태 이력,
+멱등성, 만료 Batch, 클라우드 20,000 VU 동시 발급을 포함한 심화 실험을 별도로 진행한다.
+
 기존 동시성 실험 DB(`3306`, `coupon`)와 분리된 MySQL을 사용한다.
 대용량 DB는 `3307`, `coupon_large`, `coupon-mysql-large`, `mysql-large-data`를 사용하므로
 기존 실험의 컨테이너와 데이터에 영향을 주지 않는다.
@@ -49,7 +60,7 @@ docker compose -f docker-compose.large-db.yml down -v
 
 ```powershell
 git fetch origin
-git switch -c feature/large-db-load-scripts origin/experiment/large-db-benchmark
+git switch experiment/large-db-benchmark
 
 docker compose -f docker-compose.large-db.yml up -d
 docker compose -f docker-compose.large-db.yml exec -T mysql-large mysql -ucoupon_large -pcoupon-large-1234 --init-command="SET @member_count = 100000" coupon_large -e "source /scripts/large-db/seed-stage.sql"

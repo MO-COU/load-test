@@ -2,8 +2,33 @@
 
 ## 목적
 
-데이터 규모가 커질 때 대표 기능의 성능이 언제, 왜 저하되는지 확인하고,
-원인을 하나씩 개선한 뒤 개선 전후를 비교한다.
+이 실험은 **쿠폰 발급 이력(`COUPON_ISSUE`)이 증가할 때, 자주 사용할 조회·집계 쿼리가
+언제 느려지고 왜 느려지는지 확인하는 사전 검증**이다.
+
+현재 목적은 전체 쿠폰 발급 서비스를 최종적으로 검증하는 것이 아니라, 확정 전 MVP ERD에
+공통으로 남을 핵심 테이블의 조회 구조를 미리 안전하게 만드는 것이다. 데이터 증가에 따른
+성능 저하를 수치와 실행계획으로 확인하고, 인덱스 또는 쿼리 개선 전후를 같은 조건에서 비교한다.
+
+### 이 실험이 답하는 질문
+
+- 발급 이력이 30만 건에서 300만 건으로 늘면 회원별 쿠폰 조회와 상태별 집계는 얼마나 느려지는가?
+- 어느 동시성 구간에서 처리량 증가가 멈추고 p95 지연시간이 급격히 증가하는가?
+- 느려진 원인은 Full Table Scan, 정렬, 임시 테이블 집계 중 무엇인가?
+- 인덱스를 적용하면 실제 rows, 실행계획, Avg, p95가 어떻게 달라지는가?
+
+### 현재 실험의 범위와 제외 범위
+
+| 구분 | 현재 대용량 실험 | MVP ERD 확정 후 심화 실험 |
+| --- | --- | --- |
+| 회원별 쿠폰 조회 | `coupon_issue` 조회와 인덱스 개선 | 확정 컬럼 기준 API·응답 형태 재검증 |
+| 쿠폰·상태별 집계 | 전체 이력 집계의 증가 추이와 개선 | 운영 통계 구조·캐시·집계 테이블 필요성 검토 |
+| 신규 발급 | `coupon_issue` INSERT 성능 | `coupon_stock` 차감 + 발급 + 이력 저장 트랜잭션 |
+| 상태 변경 | `ISSUED → USED` UPDATE 성능 | `used_at`·`updated_at` 갱신, 이력·멱등성 처리 포함 |
+| 만료 Batch | 현재 범위에서 제외 | `expires_at` 기반 대상 조회와 Chunk Size별 처리량·DB 부하 측정 |
+| 동시 발급 경합 | 현재 범위에서 제외 | 동일 쿠폰 재고 행 잠금, 클라우드 20,000 VU 부하 측정 |
+
+현재 INSERT와 UPDATE 결과는 단일 테이블 기준의 기초 성능으로 해석한다. 실제 발급 트랜잭션의
+재고 잠금, 상태 이력 INSERT, 멱등성 제약 비용까지 대표하는 결과는 아니다.
 
 ## 데이터 규모
 
@@ -30,7 +55,7 @@
 2. INSERT: 신규 발급 이력 저장
 3. UPDATE: 쿠폰 상태 `ISSUED`에서 `USED`로 변경
 4. 집계: 쿠폰별·상태별 발급 건수
-5. Spring Batch: 만료 대상 대량 처리
+5. Spring Batch: 만료 대상 대량 처리(ERD 확정 후 심화 실험)
 
 `member` 테이블과 `coupon_issue.status` 컬럼은 위 기능을 위해 대용량 실험 전용 스키마에 포함한다.
 
@@ -61,9 +86,23 @@ docker compose -f docker-compose.large-db.yml exec -T mysql-large mysql -ucoupon
 
 1. 해당 단계의 MEMBER 및 COUPON_ISSUE 데이터를 준비한다.
 2. 조회, INSERT, UPDATE, 집계의 Avg, p95, 실행시간을 기록한다.
-3. Spring Batch를 chunk size 500, 1,000, 5,000으로 실행하고 전체 처리시간과 DB 부하를 기록한다.
-4. p95가 기준을 넘거나 직전 단계보다 크게 악화된 쿼리만 `EXPLAIN ANALYZE`로 분석한다.
-5. 결과와 관찰 내용을 기록한 뒤 다음 데이터 단계로 진행한다.
+3. 조회·집계처럼 데이터 증가에 따라 악화되는 쿼리는 `EXPLAIN ANALYZE`로 분석한다.
+4. 결과와 관찰 내용을 기록한 뒤 다음 데이터 단계로 진행한다.
+
+### 3. Baseline 완료 상태
+
+Baseline 측정은 Stage 1~4에서 완료했다. 상세 결과는 아래 문서를 사용한다.
+
+- [Stage 1: 회원 10만 / 발급 이력 30만](benchmark-results/stage-1.md)
+- [Stage 2: 회원 30만 / 발급 이력 90만](benchmark-results/stage-2.md)
+- [Stage 3: 회원 50만 / 발급 이력 150만](benchmark-results/stage-3.md)
+- [Stage 4: 회원 100만 / 발급 이력 300만](benchmark-results/stage-4.md)
+
+Stage 4에서 확인된 기준선은 다음과 같다.
+
+- 회원별 쿠폰 조회: 300만 건 Full Scan 후 정렬, 50 VU p95 `5.06s`
+- 쿠폰·상태별 집계: 300만 건 Full Scan, 임시 테이블 집계·정렬, 50 VU p95 `13.11s`
+- INSERT·UPDATE: 같은 조건에서 50 VU p95 약 `30ms` 수준
 
 ## 실행계획 확인 항목
 
@@ -83,7 +122,31 @@ docker compose -f docker-compose.large-db.yml exec -T mysql-large mysql -ucoupon
 4. `EXPLAIN ANALYZE`를 다시 실행해 전후 차이를 저장한다.
 5. 개선 전후에 대해 Avg, p95, 실행시간, 실제 rows, Full Scan 여부를 나란히 비교한다.
 
+## 전체 진행 흐름
+
+```text
+1차: 현재 단순화 스키마에서 조회·집계 병목을 찾는다
+  → Stage 1~4 Baseline 완료
+  → 인덱스 가설을 하나씩 적용하고 Stage 4에서 재측정
+  → 개선 전/후 실행계획과 p95 비교
+
+2차: MVP ERD 확정 후 실제 발급 흐름을 반영한다
+  → coupon_stock, 확장된 coupon_issue, coupon_issue_history 반영
+  → 재고 차감 + 발급 + 이력 저장 트랜잭션 측정
+  → expires_at 기반 Spring Batch 측정
+  → 클라우드 환경에서 20,000 VU 동시 발급·잠금 경합 측정
+```
+
 ## 다음 작업
 
-Stage 1 데이터(회원 10만, 발급 이력 30만)를 기준으로 대표 쿼리 4개의 Baseline 측정을 시작한다.
-측정값을 기록한 뒤 같은 절차로 Stage 2 데이터를 적재한다.
+현재 통합 브랜치 `experiment/large-db-benchmark`에서 개선 전 기준선을 보존한다.
+이 브랜치에서 `feature/large-db-index-optimization`을 분기한 뒤, 아래 순서로 진행한다.
+
+1. 조회 인덱스 `(member_id, issued_at DESC)`만 적용한다.
+2. Stage 4 조건(회원 100만, 발급 이력 300만)에서 조회 1·10·50 VU를 재측정한다.
+3. `EXPLAIN ANALYZE`로 Full Scan 제거 여부와 실제 rows·실행시간을 Baseline과 비교한다.
+4. 결과를 기록한 뒤 집계 인덱스 `(coupon_id, status)`를 별도 가설로 검토·측정한다.
+
+인덱스 개선 결과는 `feature/large-db-index-optimization`에서 검증한 뒤
+`experiment/large-db-benchmark`으로 병합한다. 모든 대용량 실험이 끝나면
+`experiment/large-db-benchmark`에서 `main`으로 최종 PR을 생성한다.
