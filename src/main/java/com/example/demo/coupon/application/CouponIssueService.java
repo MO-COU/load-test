@@ -2,7 +2,6 @@ package com.example.demo.coupon.application;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.CannotCreateTransactionException;
 
 import com.example.demo.common.exception.CouponNotFoundException;
 import com.example.demo.common.exception.DuplicateIssueException;
@@ -24,8 +23,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CouponIssueService {
 
-	private static final int MAX_DB_WRITE_ATTEMPTS = 2;
-
 	private final CouponRepository couponRepository;
 	private final RedisCouponIssueGateway redisCouponIssueGateway;
 	private final CouponIssueWriter couponIssueWriter;
@@ -44,14 +41,8 @@ public class CouponIssueService {
 		validateReservation(result, couponId, memberId);
 
 		try {
-//			couponIssueWriter.write(couponId, memberId);
-			writeWithRetry(couponId, memberId);
-			// Redis 예약 성공
-			// -> DB Writer 첫 시도 - 성공: 완료
-			// 커넥션 획득 실패 : 한 번 재시도 - 성공 : 완료, 재실패 : Redis 보상 후 500
-
+			couponIssueWriter.write(couponId, memberId);
 		} catch (DataIntegrityViolationException e) {
-
 			// Redis 복구
 			redisCouponIssueGateway.compensate(couponId, memberId);
 			throw new DuplicateIssueException(couponId, memberId);
@@ -65,26 +56,6 @@ public class CouponIssueService {
 		}
 	}
 
-	/**
-	 * Redis가 DB 처리 속도보다 빠르게 발급을 승인하면 커넥션 풀이 일시적 포화 가능
-	 *
-	 * 트랜잭션 생성에 실패한 경우에는 아직 SQL이 실행되지 않았으므로 DB 저장만 제한적으로 재시도.
-	 */
-
-	private void writeWithRetry(Long couponId, Long memberId) {
-	    CannotCreateTransactionException lastException = null;
-
-	    for (int attempt = 1; attempt <= MAX_DB_WRITE_ATTEMPTS; attempt++) {
-	        try {
-	            couponIssueWriter.write(couponId, memberId);
-	            return;
-	        } catch (CannotCreateTransactionException e) {
-	            lastException = e;
-	        }
-	    }
-
-	    throw lastException;
-	}
 
 	 /**
      * Redis Lua 실행 결과를 애플리케이션 예외로 변환.
