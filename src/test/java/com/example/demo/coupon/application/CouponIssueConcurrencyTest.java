@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.demo.common.exception.DuplicateIssueException;
+import com.example.demo.common.exception.OptimisticRetryExhaustedException;
 import com.example.demo.common.exception.SoldOutException;
 import com.example.demo.coupon.domain.CouponIssueRepository;
 import java.util.concurrent.CountDownLatch;
@@ -172,7 +173,7 @@ class CouponIssueConcurrencyTest {
 	}
 
 	/**
-	 * 서버가 WATCH 재시도를 소진(IllegalStateException)하면 클라이언트가 다시 시도하듯 재시도한다.
+	 * 서버가 WATCH 재시도를 소진(OptimisticRetryExhaustedException)하면 클라이언트가 다시 시도하듯 재시도한다.
 	 * 이렇게 하면 재고가 끝까지 소진되어 "초과 발급 없음"을 결정론적으로 검증할 수 있다.
 	 * (재시도 소진 자체의 빈도는 k6 부하테스트에서 따로 관측한다.)
 	 */
@@ -193,7 +194,7 @@ class CouponIssueConcurrencyTest {
 				// 서로 다른 회원만 쓰는 시나리오라 정상 흐름에선 오지 않는다.
 				unexpected.incrementAndGet();
 				return;
-			} catch (IllegalStateException e) {
+			} catch (OptimisticRetryExhaustedException e) {
 				// WATCH 재시도 소진 → 클라이언트 재시도.
 			}
 		}

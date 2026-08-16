@@ -1,13 +1,14 @@
 package com.example.demo.coupon.application;
 
 import com.example.demo.common.exception.DuplicateIssueException;
+import com.example.demo.common.exception.OptimisticRetryExhaustedException;
 import com.example.demo.common.exception.SoldOutException;
 import com.example.demo.coupon.domain.CouponIssue;
 import com.example.demo.coupon.domain.CouponIssueRepository;
-import com.example.demo.coupon.domain.CouponRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -19,8 +20,12 @@ import org.springframework.transaction.support.TransactionTemplate;
  * 낙관적 락(Redis WATCH / MULTI / EXEC) 기반 쿠폰 발급.
  *
  *   1. Redis 에서 재고와 1인1매를 먼저 확정한다(품절·중복이면 예외, WATCH 충돌이면 재시도).
- *   2. 확정되면 같은 결과를 DB(coupon_issue INSERT + issued_count 증가)에 기록한다.
+ *   2. 확정되면 같은 결과를 DB(coupon_issue INSERT)에 기록한다.
  *      DB 반영이 실패하면 Redis 예약(DECR/SADD)을 손으로 되돌린다(INCR/SREM).
+ *
+ * coupon.issued_count 는 갱신하지 않는다. 재고 판정은 Redis 가 이미 원자적으로 끝냈는데
+ * 여기서 그 카운터까지 UPDATE 하면 모든 요청이 coupon 행 하나에 락을 걸고 커밋까지
+ * 유지해, Redis 로 얻은 이점이 DB 에서 다시 직렬화되어 사라진다.
  *
  * Spring 메서드 ↔ Redis 명령: get→GET, isMember→SISMEMBER, decrement→DECR,
  *   add→SADD, increment→INCR(DECR 보상), remove→SREM(SADD 보상)
@@ -32,22 +37,21 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class CouponIssueService {
 
 	private final StringRedisTemplate redisTemplate;
-	private final CouponRepository couponRepository;
 	private final CouponIssueRepository couponIssueRepository;
 	private final TransactionTemplate transactionTemplate;
 
 	private static final int MAX_RETRY = 5;
+	// 재시도 소진 횟수. rush.js 를 못 건드려 k6 결과에서 따로 안 잡히므로 여기서 직접 센다.
+	private static final AtomicLong retryExhaustedCount = new AtomicLong();
 
 	public CouponIssueService(
 		StringRedisTemplate redisTemplate,
-		CouponRepository couponRepository,
 		CouponIssueRepository couponIssueRepository,
 		PlatformTransactionManager transactionManager
 	) {
 		this.redisTemplate = redisTemplate;
-		this.couponRepository = couponRepository;
 		this.couponIssueRepository = couponIssueRepository;
-		// INSERT + 증가를 한 트랜잭션으로 묶기 위한 것. @Transactional 을 이 클래스 내부에서
+		// INSERT 를 트랜잭션으로 묶기 위한 것. @Transactional 을 이 클래스 내부에서
 		// self-invocation 하면 프록시를 우회해 트랜잭션이 안 걸리므로 TransactionTemplate 을 쓴다.
 		this.transactionTemplate = new TransactionTemplate(transactionManager);
 	}
@@ -68,8 +72,9 @@ public class CouponIssueService {
 
 		// WATCH 충돌이 MAX_RETRY 안에 안 풀림. 숨기지 않고 5xx 로 드러낸다.
 		// (고경합에서 WATCH 방식의 한계를 보여주는 측정값 그 자체다.)
-		throw new IllegalStateException(
-			"optimistic retry exhausted: coupon=" + couponId + ", member=" + memberId);
+		System.out.println("[retry-exhausted] count=" + retryExhaustedCount.incrementAndGet()
+			+ " coupon=" + couponId + " member=" + memberId);
+		throw new OptimisticRetryExhaustedException(couponId, memberId);
 	}
 
 	/**
@@ -113,17 +118,16 @@ public class CouponIssueService {
 	}
 
 	/**
-	 * Redis 예약을 DB 에 기록한다(INSERT + issued_count 증가를 한 트랜잭션으로).
+	 * Redis 예약을 DB 에 기록한다(coupon_issue INSERT).
+	 * issued_count 는 건드리지 않는다 — 재고 판정은 Redis 가 이미 끝냈다.
 	 * clean run 에서는 Redis 가 중복·품절을 이미 걸렀으므로 여기서 실패할 일이 없지만,
 	 * 만약 실패(드리프트 등)하면 DB 는 트랜잭션이 롤백하고 Redis 는 손으로 되돌린다.
 	 */
 	private void persist(Long couponId, Long memberId,
 		String stockKey, String issuedKey, String memberIdStr) {
 		try {
-			transactionTemplate.executeWithoutResult(status -> {
-				couponIssueRepository.save(new CouponIssue(couponId, memberId, LocalDateTime.now()));
-				couponRepository.increaseIssuedCount(couponId);
-			});
+			transactionTemplate.executeWithoutResult(status ->
+				couponIssueRepository.save(new CouponIssue(couponId, memberId, LocalDateTime.now())));
 		} catch (RuntimeException e) {
 			// DB 반영 실패 → 방금 잡은 Redis 예약을 원복(INCR + SREM)하고 예외를 전파한다.
 			redisTemplate.opsForValue().increment(stockKey);          // INCR: DECR 보상
