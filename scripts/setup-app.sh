@@ -26,7 +26,7 @@ fi
 echo "▶ [2/5] git, curl, JDK 21"
 sudo apt-get update -qq
 command -v git >/dev/null || sudo apt-get install -y git
-# curl 은 metrics.sh 가 actuator 를 긁을 때도 쓰므로 docker 설치 여부와 무관하게 확보한다.
+# metrics.sh 가 쓰므로 docker 설치 여부와 무관하게 확보한다.
 command -v curl >/dev/null || sudo apt-get install -y curl
 if command -v javac >/dev/null && javac -version 2>&1 | grep -q '^javac 21'; then
 	echo "   JDK 21 이미 설치됨"
@@ -70,8 +70,6 @@ cat > "$HOME/reset.sh" <<'SH'
 # 성능 측정 직전 초기화:  ~/reset.sh          DB 재고만
 #                          ~/reset.sh redis    Redis 재고까지 (lua / watch / redisson)
 #
-# 재고가 말라야 품절 거절이 발생하고, 그 거절을 DB 까지 보내는지
-# 인메모리에서 쳐내는지가 비교 대상이 된다. 넉넉히 주면 그 상황이 사라진다.
 set -e
 STOCK=10000
 
@@ -97,7 +95,7 @@ Q() { sudo docker compose exec -T mysql mysql -N -B -ucoupon -pcoupon1234 coupon
 
 sudo docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon -e "source /scripts/verify.sql"
 
-# 재고 누수 검사. 보상이 안 되면 발급도 안 됐는데 재고만 사라진다.
+# 재고 누수 검사 (redis-lua, redis-watch)
 STOCK=$(sudo docker compose exec -T redis redis-cli GET coupon:stock:1 | tr -d '\r')
 if [ -z "$STOCK" ]; then
 	echo "재고누수  SKIP  (Redis 재고 키 없음 = DB 전용 브랜치)"
@@ -115,7 +113,7 @@ SH
 cat > "$HOME/metrics.sh" <<'SH'
 #!/usr/bin/env bash
 # 자원 사용률 수집:  ~/metrics.sh <결과파일이름>
-# k6 시작 직전에 실행하고 끝나면 Ctrl+C. 커넥션 풀·스레드는 k6 로 못 본다.
+# k6 시작 직전에 실행하고 끝나면 Ctrl+C.
 mkdir -p ~/results
 OUT=~/results/metrics-${1:-result}.txt
 
@@ -131,8 +129,7 @@ SH
 
 cat > "$HOME/dbstat.sh" <<'SH'
 #!/usr/bin/env bash
-# MySQL 락 통계:  ~/dbstat.sh
-# 측정 전후로 찍어 차이를 본다. 락 경합이 실제로 늘었는지의 근거.
+# MySQL 락 통계:  ~/dbstat.sh   측정 전후로 찍어 차이를 본다.
 cd ~/load-test
 sudo docker compose exec -T mysql mysql -uroot -proot1234 -e "
 SHOW GLOBAL STATUS WHERE Variable_name IN (
