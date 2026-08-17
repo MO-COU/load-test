@@ -4,7 +4,7 @@
 #
 #   sudo apt-get update && sudo apt-get install -y git \
 #     && git clone https://github.com/MO-COU/load-test.git \
-#     && bash load-test/scripts/setup-k6.sh 10.0.1.20
+#     && bash load-test/scripts/setup-k6.sh <앱서버-프라이빗-IP>
 #
 # 인자는 앱 서버의 프라이빗 IP.
 set -euo pipefail
@@ -56,7 +56,7 @@ echo "▶ [3/4] 저장소"
 echo "▶ [4/4] 실행 스크립트"
 if [ -z "$APP_IP" ]; then
 	echo "   앱 서버 IP 를 인자로 주지 않아 건너뛴다."
-	echo "     bash load-test/scripts/setup-k6.sh 10.0.1.20"
+	echo "     bash load-test/scripts/setup-k6.sh <앱서버-프라이빗-IP>"
 else
 	cat > "$HOME/k6.sh" <<SH
 #!/usr/bin/env bash

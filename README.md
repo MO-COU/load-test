@@ -161,7 +161,7 @@ sudo apt-get update && sudo apt-get install -y git \
 # k6 서버 — 인자는 앱 서버의 프라이빗 IP
 sudo apt-get update && sudo apt-get install -y git \
   && git clone https://github.com/MO-COU/load-test.git \
-  && bash load-test/scripts/setup-k6.sh 10.0.1.20
+  && bash load-test/scripts/setup-k6.sh <앱서버-프라이빗-IP>
 ```
 
 `ulimit -n` 이 65535 인지 확인하려면 **재접속**해야 한다.
