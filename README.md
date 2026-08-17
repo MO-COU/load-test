@@ -91,23 +91,50 @@ docker compose up -d
 
 `main` 은 baseline 이라 실패한다. 정상이다.
 
-## Redis 브랜치가 추가로 봐야 하는 것
+`optimistic`, `redis-watch` 는 경합에서 밀리면 서버가 5회 만에 포기하고 5xx 를 낸다.
+포기는 초과 발급이 아니라 "못 준" 것이므로 정합성 위반으로 보지 않는다.
+테스트는 사용자가 다시 누르듯 재호출해 재고가 끝까지 소진되는지 확인하고,
+포기가 몇 번 있었는지는 출력의 `서버 포기 N회` 로 남긴다.
 
-DB INSERT 가 실패했을 때 Redis 예약을 되돌리지 않으면 재고가 증발하고,
-받지도 못한 회원이 명단에 남아 재발급을 못 받는다.
+## 테스트 후 DB 상태 확인
 
-공통 테스트는 DB 사실만 단언하므로 이건 안 본다. `redis-lua`, `redis-watch` 는
-자기 브랜치에 아래를 추가한다.
+테스트가 남긴 DB 를 표로 볼 수 있다.
 
-```java
-assertThat(redisTemplate.opsForValue().get(stockKey)).isEqualTo("0");
-assertThat(redisTemplate.opsForSet().size(issuedKey)).isEqualTo((long) STOCK);
+```bash
+docker compose exec -T mysql mysql -t -ucoupon -pcoupon1234 coupon -e "source /scripts/verify.sql"
 ```
 
-키 이름이 다르다 — `redis-lua` 는 `coupon:issued-members:1`, `redis-watch` 는 `coupon:issued:1`.
+```
++-------+---------+-------------+-------------+----------+------------+-----------+--------------+
+| stock | counter | issued_rows | dup_members | oversell | counter_ok | duplicate | redis_expect |
+|  1000 |    1000 |        1000 |           0 | PASS     | PASS       | PASS      |            0 |
++-------+---------+-------------+-------------+----------+------------+-----------+--------------+
+```
 
-DB 단일 방식(`pessimistic`, `optimistic`, `atomic-update`, `redisson`)은
-트랜잭션 하나로 끝나므로 해당 없다.
+| 컬럼 | 의미 |
+|---|---|
+| `oversell` | 발급 행 수가 재고를 넘지 않았는가 |
+| `counter_ok` | 카운터(`issued_count`)와 실제 행 수가 같은가. 다르면 발급 한 건의 카운터 증가와 이력 INSERT 중 하나만 반영된 것이다. **테스트가 단언하지 않는 유일한 항목.** Redis 방식은 카운터를 안 써 N/A |
+| `duplicate` | 한 회원이 2장 받지 않았는가 |
+| `redis_expect` | Redis 재고의 기대값. `redis-lua`, `redis-watch` 만 아래와 대조 |
+
+```bash
+# redis-lua, redis-watch 만 — redis_expect 와 같아야 한다
+docker compose exec -T redis redis-cli GET coupon:stock:1
+```
+
+마지막에 실행된 테스트의 상태가 남으므로 `issued_rows` 가 1 로 보일 수 있다. 정상이다.
+
+## Redis 정합성 (`redis-lua`, `redis-watch`)
+
+이 두 방식은 재고를 Redis 에서 차감한 뒤 DB 에 이력을 남긴다. 두 저장소에 나눠 쓰므로
+DB INSERT 가 실패하면 Redis 차감을 직접 되돌려야 한다. 이것이 보상이다.
+
+보상이 빠지면 아무도 받지 못한 재고가 사라지고, 받지 못한 회원이 발급자 명단에 남아
+재발급도 막힌다. 그래서 두 브랜치의 테스트는 아래를 추가로 단언한다.
+
+- Redis 잔여 재고 == 0
+- 발급자 명단 크기 == 실제 발급 수
 
 ---
 
@@ -253,7 +280,7 @@ max-connections  30,000   측정용 값이다. 실무 권장값이 아니다
 scripts/db/schema.sql   테이블 (최초 1회 자동)
 scripts/db/data.sql     시드 (최초 1회 자동)
 scripts/db/reset.sql    EC2 측정 전 초기화
-scripts/db/verify.sql   EC2 측정 후 발급 수 확인
+scripts/db/verify.sql   테스트·측정 후 결과 확인
 scripts/setup-app.sh    앱 서버 세팅
 scripts/setup-k6.sh     k6 서버 세팅
 load-test/rush-remote.js  성능용 (EC2)
