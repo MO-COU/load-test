@@ -35,6 +35,7 @@ class CouponIssueConcurrencyTest {
 	private static final int CLIENT_RETRY = 300;  // 서버가 포기하면 사용자가 다시 누르듯 재호출
 
 	private final String stockKey = "coupon:stock:" + COUPON_ID;
+	private final String issuedKey = "coupon:issued-members:" + COUPON_ID;
 
 	private static final ThreadFactory DAEMON = r -> {
 		Thread t = new Thread(r);
@@ -81,6 +82,13 @@ class CouponIssueConcurrencyTest {
 
 		assertThat(issuedRows()).as("초과 발급 — coupon_issue 행 수").isEqualTo(STOCK);
 		assertThat(duplicateMembers()).as("중복 발급 — 2건 이상 받은 회원 수").isZero();
+
+		// redis-lua 전용 단언. DB 쓰기 실패 시 보상이 Redis 예약을 되돌렸는지 본다.
+		// 재고가 남거나 명단이 발급 수와 다르면 보상 로직에 구멍이 있는 것이다.
+		assertThat(redisTemplate.opsForValue().get(stockKey))
+			.as("Redis 잔여 재고").isEqualTo("0");
+		assertThat(redisTemplate.opsForSet().size(issuedKey))
+			.as("Redis 발급자 명단 크기").isEqualTo((long) STOCK);
 	}
 
 	/**
