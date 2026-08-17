@@ -8,6 +8,7 @@ import com.example.demo.coupon.domain.CouponIssue;
 import com.example.demo.coupon.domain.CouponIssueRepository;
 import com.example.demo.coupon.domain.CouponRepository;
 import java.time.LocalDateTime;
+import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -58,6 +59,14 @@ public class CouponIssueService {
 			} catch (ObjectOptimisticLockingFailureException e) {
 				// version 충돌. 재고/중복 여부는 아직 확정되지 않았으므로 재시도한다.
 				lastFailure = e;
+				// 통일 사항: redis-watch 와 동일한 백오프. 무작위로 흩어져야
+				// 실패한 요청들이 같은 시점에 다시 몰리지 않는다.
+				try {
+					Thread.sleep(5 + ThreadLocalRandom.current().nextInt(15));
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+					break;
+				}
 			}
 		}
 
