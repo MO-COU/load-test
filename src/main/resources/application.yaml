@@ -8,17 +8,12 @@ spring:
     password: ${DB_PASSWORD:coupon1234}
     hikari:
       # 통일 사항. 브랜치별로 바꾸면 비교가 성립하지 않는다.
-      # 10(기본값)이면 모든 방식이 "커넥션 부족"이라는 같은 병목에 걸려
-      # 락 전략의 차이가 묻힌다. MySQL 기본 max_connections(151) 안에 들어간다.
       maximum-pool-size: ${DB_POOL_SIZE:50}
-      # 30초는 실패가 너무 늦게 드러난다. 10초면 결과 분석이 쉽다.
       connection-timeout: ${DB_CONNECTION_TIMEOUT:10000}
 
   jpa:
     hibernate:
       # 스키마는 scripts/db/schema.sql 이 관리한다.
-      # validate 는 엔티티와 실제 스키마가 어긋나면 기동 시점에 바로 실패시켜서,
-      # 잘못된 상태로 부하를 거는 사고를 막는다.
       ddl-auto: ${JPA_DDL_AUTO:validate}
     show-sql: ${JPA_SHOW_SQL:false}
     open-in-view: false
@@ -40,3 +35,14 @@ server:
       # 통일 사항.
       max: ${TOMCAT_MAX_THREADS:200}
     accept-count: ${TOMCAT_ACCEPT_COUNT:100}
+    # 통일 사항. 기본값 8192 로는 VU 20000 의 연결을 다 받지 못한다.
+    max-connections: ${TOMCAT_MAX_CONNECTIONS:30000}
+    # 스레드풀 사용률 확인을 위한 mbean 등록
+    mbean-registry:
+      enabled: true
+# ~/metrics.sh 가 /actuator/prometheus 를 긁는다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_EXPOSURE:prometheus,metrics,health}
