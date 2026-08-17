@@ -60,7 +60,7 @@ if [ -z "$APP_IP" ]; then
 else
 	cat > "$HOME/k6.sh" <<SH
 #!/usr/bin/env bash
-# 부하 생성:  ~/k6.sh pessimistic 1
+# 부하 생성:  ~/k6.sh <결과파일이름>
 #
 # 앱 서버가 바뀌면 아래 TARGET 만 고친다.
 set -e
@@ -70,9 +70,10 @@ SH
 
 cd ~/load-test
 mkdir -p ~/results
-k6 run load-test/rush-remote.js 2>&1 | tee ~/results/$1-$2.txt
+OUT=~/results/${1:-result}.txt
+k6 run load-test/rush-remote.js 2>&1 | tee "$OUT"
 echo
-echo "▶ 저장됨: ~/results/$1-$2.txt"
+echo "▶ 저장됨: $OUT"
 SH
 	chmod +x "$HOME/k6.sh"
 	echo "   ~/k6.sh 생성함 (TARGET=http://${APP_IP}:8080)"
@@ -80,4 +81,4 @@ fi
 
 echo
 echo "완료."
-echo "재접속 후: ulimit -n  →  65535 확인 → ~/k6.sh <라벨> <회차>"
+echo "재접속 후: ulimit -n  →  65535 확인 → ~/k6.sh <결과파일이름>"

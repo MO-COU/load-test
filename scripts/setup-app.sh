@@ -26,7 +26,7 @@ fi
 echo "▶ [2/5] git, curl, JDK 21"
 sudo apt-get update -qq
 command -v git >/dev/null || sudo apt-get install -y git
-# curl 은 metrics.sh 가 actuator 를 긁을 때도 쓰므로 docker 설치 여부와 무관하게 확보한다.
+# metrics.sh 가 쓰므로 docker 설치 여부와 무관하게 확보한다.
 command -v curl >/dev/null || sudo apt-get install -y curl
 if command -v javac >/dev/null && javac -version 2>&1 | grep -q '^javac 21'; then
 	echo "   JDK 21 이미 설치됨"
@@ -70,13 +70,8 @@ cat > "$HOME/reset.sh" <<'SH'
 # 성능 측정 직전 초기화:  ~/reset.sh          DB 재고만
 #                          ~/reset.sh redis    Redis 재고까지 (lua / watch / redisson)
 #
-# EC2 는 성능만 잰다. 정확성(초과·중복 발급)은 각자 로컬에서 rush.js 로 본다.
-#
-# 재고를 크게 두는 이유: 재고가 마르면 이후 요청은 전부 품절 거절인데,
-# 거절은 발급보다 싸다. 빠른 브랜치일수록 거절 비중이 커져 처리량이 부풀려진다.
-# 60초 안에 안 마를 만큼 두면 모든 요청이 똑같이 "진짜 발급" 이 된다.
 set -e
-STOCK=1000000
+STOCK=10000
 
 cd ~/load-test
 sudo docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon \
@@ -100,8 +95,7 @@ Q() { sudo docker compose exec -T mysql mysql -N -B -ucoupon -pcoupon1234 coupon
 
 sudo docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon -e "source /scripts/verify.sql"
 
-# 재고 누수 검사. Redis 에서 재고를 깎고 DB 쓰기가 실패했을 때 되돌리지 않으면
-# 발급도 안 됐는데 재고만 사라진다. 초과 발급보다 조용해서 더 놓치기 쉽다.
+# 재고 누수 검사 (redis-lua, redis-watch)
 STOCK=$(sudo docker compose exec -T redis redis-cli GET coupon:stock:1 | tr -d '\r')
 if [ -z "$STOCK" ]; then
 	echo "재고누수  SKIP  (Redis 재고 키 없음 = DB 전용 브랜치)"
@@ -118,12 +112,10 @@ SH
 
 cat > "$HOME/metrics.sh" <<'SH'
 #!/usr/bin/env bash
-# 자원 사용률 수집:  ~/metrics.sh <라벨> <회차>
-#
-# k6 시작 직전에 실행하고, 끝나면 Ctrl+C 로 중단한다.
-# 커넥션 풀과 워커 스레드 사용률은 k6 로는 볼 수 없어 여기서 직접 긁는다.
+# 자원 사용률 수집:  ~/metrics.sh <결과파일이름>
+# k6 시작 직전에 실행하고 끝나면 Ctrl+C.
 mkdir -p ~/results
-OUT=~/results/metrics-${1:-run}-${2:-x}.txt
+OUT=~/results/metrics-${1:-result}.txt
 
 echo "▶ 수집 시작 → $OUT   (Ctrl+C 로 중단)"
 while true; do
@@ -137,9 +129,7 @@ SH
 
 cat > "$HOME/dbstat.sh" <<'SH'
 #!/usr/bin/env bash
-# MySQL 락·I/O 통계:  ~/dbstat.sh
-#
-# 측정 전후로 한 번씩 찍어 차이를 본다. 락 경합이 실제로 늘었는지의 근거.
+# MySQL 락 통계:  ~/dbstat.sh   측정 전후로 찍어 차이를 본다.
 cd ~/load-test
 sudo docker compose exec -T mysql mysql -uroot -proot1234 -e "
 SHOW GLOBAL STATUS WHERE Variable_name IN (
