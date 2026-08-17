@@ -37,7 +37,9 @@ server:
     accept-count: ${TOMCAT_ACCEPT_COUNT:100}
     # 통일 사항. 기본값 8192 로는 VU 20000 의 연결을 다 받지 못한다.
     max-connections: ${TOMCAT_MAX_CONNECTIONS:30000}
-
+    # 스레드풀 사용률 확인을 위한 mbean 등록
+    mbean-registry:
+      enabled: true
 # ~/metrics.sh 가 /actuator/prometheus 를 긁는다.
 management:
   endpoints:
