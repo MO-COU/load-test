@@ -32,6 +32,7 @@ class CouponIssueConcurrencyTest {
 	private static final int STOCK = 1000;
 	private static final int MEMBER_POOL = 2000;  // 재고보다 많아야 품절이 발생한다
 	private static final int THREADS = 100;       // 커넥션 풀(50)보다 커야 경합이 유지된다
+	private static final int CLIENT_RETRY = 300;  // 서버가 포기하면 사용자가 다시 누르듯 재호출
 
 	private final String stockKey = "coupon:stock:" + COUPON_ID;
 
@@ -64,30 +65,54 @@ class CouponIssueConcurrencyTest {
 		ExecutorService pool = Executors.newFixedThreadPool(THREADS, DAEMON);
 		AtomicInteger success = new AtomicInteger();
 		AtomicInteger soldOut = new AtomicInteger();
-		AtomicInteger other = new AtomicInteger();
+		AtomicInteger serverGiveUps = new AtomicInteger();
+		AtomicInteger unresolved = new AtomicInteger();
 
 		for (int member = 1; member <= MEMBER_POOL; member++) {
 			long memberId = member;
-			pool.submit(() -> {
-				try {
-					couponIssueService.issue(COUPON_ID, memberId);
-					success.incrementAndGet();
-				} catch (SoldOutException e) {
-					soldOut.incrementAndGet();
-				} catch (RuntimeException e) {
-					other.incrementAndGet();
-				}
-			});
+			pool.submit(() -> issueWithClientRetry(memberId, success, soldOut, serverGiveUps, unresolved));
 		}
 		pool.shutdown();
 		assertThat(pool.awaitTermination(180, TimeUnit.SECONDS))
 			.as("제한 시간 내 종료").isTrue();
 
-		System.out.printf("발급 %d / 품절 %d / 그 외 %d%n",
-			success.get(), soldOut.get(), other.get());
+		System.out.printf("발급 %d / 품절 %d / 서버 포기 %d회 / 미해소 %d%n",
+			success.get(), soldOut.get(), serverGiveUps.get(), unresolved.get());
 
 		assertThat(issuedRows()).as("초과 발급 — coupon_issue 행 수").isEqualTo(STOCK);
 		assertThat(duplicateMembers()).as("중복 발급 — 2건 이상 받은 회원 수").isZero();
+	}
+
+	/**
+	 * 서버가 재시도 소진으로 포기(5xx)하면 사용자가 다시 누르듯 재호출한다.
+	 * 재시도 상한이 있는 방식(optimistic, redis-watch)에서만 발동하고,
+	 * 대기형·원자형은 첫 호출에 성공/품절로 끝나 루프를 돌지 않는다.
+	 *
+	 * 서버 포기 횟수는 관측값으로만 남긴다. 정합성 위반(초과 발급)이 아니라
+	 * 가용성 문제이며, 실패율 자체는 EC2 k6 측정이 담당한다.
+	 */
+	private void issueWithClientRetry(long memberId, AtomicInteger success,
+		AtomicInteger soldOut, AtomicInteger serverGiveUps, AtomicInteger unresolved) {
+		for (int attempt = 0; attempt < CLIENT_RETRY; attempt++) {
+			if (Thread.currentThread().isInterrupted()) {
+				return;
+			}
+			try {
+				couponIssueService.issue(COUPON_ID, memberId);
+				success.incrementAndGet();
+				return;
+			} catch (SoldOutException e) {
+				soldOut.incrementAndGet();
+				return;
+			} catch (DuplicateIssueException e) {
+				// 회원이 전부 달라 정상 흐름에서는 오지 않는다.
+				unresolved.incrementAndGet();
+				return;
+			} catch (RuntimeException e) {
+				serverGiveUps.incrementAndGet();
+			}
+		}
+		unresolved.incrementAndGet();
 	}
 
 	@Test
