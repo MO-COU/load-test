@@ -102,6 +102,7 @@ DB 통계를 시각에 맞춰 겹쳐 봐야 나온다.
 | `redis-watch` | 인메모리 | 10,165 | 1.27s | 10,000 완판 | 3,823 | 0 | 0 |
 
 발급 수는 DB 행 수 기준. `⏱` 는 k6 요청 타임아웃(60초)에 도달해 잘린 값이다.
+**미소진은 60초 안에 재고를 다 팔지 못한 것이며, 재고가 남은 것이지 정합성 문제가 아니다.**
 `main` 은 정합성을 통과하지 못해 성능을 측정하지 않았다.
 
 방식별 상세 수치와 해석은 [docs/results.md](docs/results.md) 에 있다.
@@ -165,7 +166,5 @@ INSERT 8.2만, 롤백 7.5만, 락 대기 8.8만.
 
 ## 문서
 
-| | |
-|---|---|
-| [CONTRIBUTING.md](CONTRIBUTING.md) | 작업 범위·통일 조건·측정 절차 |
-| [docs/results.md](docs/results.md) | 방식별 상세 수치와 해석 |
+- [CONTRIBUTING.md](CONTRIBUTING.md) — 작업 범위·통일 조건·측정 절차
+- [docs/results.md](docs/results.md) — 방식별 상세 수치와 해석

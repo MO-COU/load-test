@@ -47,7 +47,7 @@ verify    DB 발급 10,000 (완판) · oversell PASS · counter_ok PASS · dupli
 
 ```
 k6        134 req/s · 12,089 요청 · p95 60s+ ⏱ · errors 9,799 (81.05%)
-          k6 발급 1,950 · 중복 340
+          k6 발급 1,950 · 품절 0 · 중복 340
 dbstat    insert +82,505 · rollback +74,529 · update +80,784
           row_lock_waits +87,675 · lock_time_avg 106ms
 metrics   active 50/50 · pending 95~149 · threads 200/200
@@ -82,7 +82,7 @@ Redis 분산락(`RLock`)을 잡고 그 안에서 DB 트랜잭션을 실행한다
 
 ```
 k6        149 req/s · 13,435 요청 · p95 60s+ ⏱ · errors 2,839 (21.13%)
-          k6 발급 7,941 · 중복 2,655
+          k6 발급 7,941 · 품절 0 · 중복 2,655
 dbstat    insert +12,685 · rollback +3,228 · update +9,459
           row_lock_waits +0 · lock_time_avg 변화 없음
 metrics   active 1 · pending 0 · threads 200/200
@@ -158,6 +158,10 @@ verify    DB 발급 10,000 (완판) · oversell PASS · counter_ok N/A · duplic
 
 `atomic` 의 `+32,286` 이 `pessimistic` 의 `+10,000` 보다 큰 것은 DB 를 세 배
 많이 쓴 것이 아니라 세는 단위가 다른 것이다.
+
+**품절 0 은 누락이 아니라 미소진의 증거다.** `optimistic` 과 `redisson` 은
+재고가 한 번도 떨어지지 않아 품절 응답이 나갈 일이 없었다. k6 는 값이 0 인
+커스텀 카운터를 요약에서 빼므로 원본 출력에는 항목 자체가 보이지 않는다.
 
 **p95 의 `60s+` 는 클립된 값이다.** k6 요청 타임아웃에 잘린 것으로 실제 대기는 그 이상이다.
 

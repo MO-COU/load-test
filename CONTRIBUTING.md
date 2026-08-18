@@ -132,6 +132,10 @@ DB 는 진짜를 쓴다 — 검증 대상이 행 락·UNIQUE 제약·Redis 원�
 docker compose exec -T mysql mysql -t -ucoupon -pcoupon1234 coupon -e "source /scripts/verify.sql"
 ```
 
+저장소의 `scripts/db/` 가 컨테이너 안에서 `/scripts` 로 마운트돼 있다
+(`docker-compose.yml` 의 `./scripts/db:/scripts:ro`). 컨테이너 안에서 `source` 로
+실행하므로 셸 리다이렉션이 없고, bash·zsh·PowerShell·cmd 어디서든 같은 명령을 쓴다.
+
 | 컬럼 | 의미 |
 |---|---|
 | `oversell` | 발급 행 수가 재고를 넘지 않았는가 |
