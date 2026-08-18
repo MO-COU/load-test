@@ -1,16 +1,32 @@
-# 선착순 쿠폰 발급 방식 비교
+# 선착순 쿠폰 발급 — 동시성 제어 6가지 비교
 
-같은 요구사항을 6가지 동시성 제어 방식으로 구현하고, 동일 조건에서 비교한다.
-`main`은 동시성 제어가 없는 baseline이며 각 방식은 `exp/*` 브랜치에 있다.
+재고 10,000장에 20,000명이 동시에 몰리는 상황을 6가지 방식으로 구현하고
+같은 조건에서 측정했다. `main` 은 동시성 제어가 없는 baseline 이고,
+각 방식은 `exp/*` 브랜치에 있다.
 
-## 무엇을 밝히려는가
+## 결론
 
-DB 락으로 정합성을 지키면 락 경합 때문에 커넥션 풀과 워커 스레드가 고갈된다.
-재고 판정을 Redis 로 옮기면 그 자원을 얼마나 확보할 수 있는가.
+**재고 판정을 인메모리로 옮긴 `redis-lua` 를 채택한다.**
+
+| | DB 판정 (최고) | `redis-lua` |
+|---|---|---|
+| 처리량 | 400 req/s | **12,399 req/s** |
+| p95 응답 | 43.7초 | **1.31초** |
+| 커넥션 풀 대기 | 149 (고갈) | **0** |
+| DB INSERT | 15,709 (5,709 롤백) | **10,000 (롤백 0)** |
+
+같은 Redis 를 쓰고도 **락에만** 쓴 `redisson-rlock` 은 149 req/s 로 DB 방식보다 느렸다.
+갈랐던 것은 Redis 사용 여부가 아니라 **재고 판정이 어디서 일어나는가** 였다.
+
+## 무엇을 밝히려 했나
+
+DB 락으로 정합성을 보장할 때 락 경합이 커넥션 풀과 워커 스레드 고갈로
+이어지는지, 그리고 재고 판정을 인메모리로 옮기면 그 자원을 확보할 수 있는지
+확인하고자 했다.
 
 ## 6가지 방식
 
-동시성 제어 방법은 셋뿐이고, 각각을 DB 와 Redis 로 구현한 3쌍이다.
+동시성 제어 전략은 셋뿐이고, 각각을 DB 와 Redis 로 구현한 3쌍이다.
 
 | 전략 | DB | Redis |
 |---|---|---|
@@ -18,129 +34,29 @@ DB 락으로 정합성을 지키면 락 경합 때문에 커넥션 풀과 워커
 | **재시도** 충돌하면 다시 | `optimistic` | `redis-watch` |
 | **원자적** 한 번에 처리 | `atomic-update` | `redis-lua` |
 
-재시도 정책이 필요한 건 가운데 줄뿐이다.
+## 정합성 — 비교의 자격
 
----
+동시성 제어가 없는 `main` 에 회원 2,000명이 재고 1,000장을 두고 몰리면
+**2,000장이 나간다.** 이걸 막는 것이 6가지 방식의 공통 목표이고, 성능은 그다음 문제다.
 
-# 시작하기
+틀린 구현은 아무리 빨라도 비교 대상이 아니므로, 성능을 재기 전에 정합성부터 확인했다.
 
-## 사전 준비
+| 검증 | 방법 | `exp/*` 6개 | `main` |
+|---|---|---|---|
+| 초과 발급 | 회원 2,000명이 재고 1,000장에 동시 요청 | 통과 | **2,000장 발급 (2배)** |
+| 중복 발급 | 같은 회원으로 스레드 100개가 동시 출발 | 통과 | 통과 |
+| Redis 보상 | 재고·발급자 명단이 DB 기록과 일치 | `lua`·`watch` 통과 | 해당 없음 |
 
-- JDK 21
-- Docker
-- [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/)
+`main` 이 중복 발급은 막는다는 점이 동시성 제어의 역할을 좁혀준다.
+중복은 `(coupon_id, member_id)` UNIQUE 제약이 DB 레벨에서 잡는다.
+**락이 필요한 것은 재고 초과 하나**다.
 
-## 실행
+동시성 정합성은 HTTP 를 거치지 않는 JUnit 통합 테스트로 검증한다.
+소켓·OS·Tomcat 계층이 결과에 섞이지 않고, 호출 수가 결정적이기 때문이다.
 
-```bash
-docker compose up -d
-docker compose ps          # mysql, redis 모두 healthy 확인
-./gradlew bootRun          # Windows: .\gradlew.bat bootRun
-```
+## 측정 방법
 
-스키마와 시드는 컨테이너가 처음 뜰 때 자동 적용된다.
-
-> 스키마를 바꿨다면 `docker compose down -v` 로 볼륨까지 지워야 다시 적용된다.
-
-## API
-
-```
-POST /issue?couponId=1&memberId=100
-
-200  ISSUED
-409  SOLD_OUT      재고 소진
-409  DUPLICATED    1인 1매 한도 위반
-404  NOT_FOUND     쿠폰 없음
-```
-
-응답 본문은 평문이다. 요청 대부분이 409라 JSON 직렬화 비용을 얹지 않는다.
-
----
-
-# 테스트는 두 종류다
-
-목적이 다르고, **조건이 서로 정반대**라 한 번에 못 본다.
-
-| | 정합성 | 성능 |
-|---|---|---|
-| 답하는 질문 | 구현이 맞는가 | Redis 가 필요한가 |
-| 어디서 | 각자 로컬 | EC2 2대 |
-| 방법 | `./gradlew test` | `load-test/rush-remote.js` |
-| 재고 | 1,000 | 10,000 |
-| 회원 | 2,000명 (테스트가 지정) | 20,000명 (= VU 수) |
-| 부하 | 스레드 100개 동시 | 60초 램프업 → 20,000 |
-| 결과 | PASS / FAIL | 숫자 비교 |
-
-**정합성을 먼저 통과해야 성능을 잰다.**
-
----
-
-# 1단계 · 정합성 (각자 로컬)
-
-```bash
-docker compose up -d
-./gradlew test          # Windows: .\gradlew.bat test
-```
-
-`CouponIssueConcurrencyTest` 가 두 가지를 검증한다.
-
-| 테스트 | 방식 | 확인 |
-|---|---|---|
-| 초과 발급 | 회원 2,000명이 재고 1,000장에 동시 요청 | `coupon_issue` 행 수 == 재고 |
-| 중복 발급 | 같은 회원으로 100개 스레드가 동시 출발 | 그 회원의 행 수 == 1 |
-
-`main` 은 baseline 이라 실패한다. 정상이다.
-
-`optimistic`, `redis-watch` 는 경합에서 밀리면 서버가 5회 만에 포기하고 5xx 를 낸다.
-포기는 초과 발급이 아니라 "못 준" 것이므로 정합성 위반으로 보지 않는다.
-테스트는 사용자가 다시 누르듯 재호출해 재고가 끝까지 소진되는지 확인하고,
-포기가 몇 번 있었는지는 출력의 `서버 포기 N회` 로 남긴다.
-
-## 테스트 후 DB 상태 확인
-
-테스트가 남긴 DB 를 표로 볼 수 있다.
-
-```bash
-docker compose exec -T mysql mysql -t -ucoupon -pcoupon1234 coupon -e "source /scripts/verify.sql"
-```
-
-```
-+-------+---------+-------------+-------------+----------+------------+-----------+--------------+
-| stock | counter | issued_rows | dup_members | oversell | counter_ok | duplicate | redis_expect |
-|  1000 |    1000 |        1000 |           0 | PASS     | PASS       | PASS      |            0 |
-+-------+---------+-------------+-------------+----------+------------+-----------+--------------+
-```
-
-| 컬럼 | 의미 |
-|---|---|
-| `oversell` | 발급 행 수가 재고를 넘지 않았는가 |
-| `counter_ok` | 카운터(`issued_count`)와 실제 행 수가 같은가. 다르면 발급 한 건의 카운터 증가와 이력 INSERT 중 하나만 반영된 것이다. **테스트가 단언하지 않는 유일한 항목.** Redis 방식은 카운터를 안 써 N/A |
-| `duplicate` | 한 회원이 2장 받지 않았는가 |
-| `redis_expect` | Redis 재고의 기대값. `redis-lua`, `redis-watch` 만 아래와 대조 |
-
-```bash
-# redis-lua, redis-watch 만 — redis_expect 와 같아야 한다
-docker compose exec -T redis redis-cli GET coupon:stock:1
-```
-
-마지막에 실행된 테스트의 상태가 남으므로 `issued_rows` 가 1 로 보일 수 있다. 정상이다.
-
-## Redis 정합성 (`redis-lua`, `redis-watch`)
-
-이 두 방식은 재고를 Redis 에서 차감한 뒤 DB 에 이력을 남긴다. 두 저장소에 나눠 쓰므로
-DB INSERT 가 실패하면 Redis 차감을 직접 되돌려야 한다. 이것이 보상이다.
-
-보상이 빠지면 아무도 받지 못한 재고가 사라지고, 받지 못한 회원이 발급자 명단에 남아
-재발급도 막힌다. 그래서 두 브랜치의 테스트는 아래를 추가로 단언한다.
-
-- Redis 잔여 재고 == 0
-- 발급자 명단 크기 == 실제 발급 수
-
----
-
-# 2단계 · 성능 (EC2, 전원 통과 후)
-
-## 구성
+부하 생성기와 애플리케이션이 CPU 를 나눠 쓰면 처리량을 믿을 수 없어 EC2 2대로 나눴다.
 
 ```
 ┌──────────────┐               ┌───────────────────────┐
@@ -148,148 +64,108 @@ DB INSERT 가 실패하면 Redis 차감을 직접 되돌려야 한다. 이것이
 └──────────────┘               └───────────────────────┘
 ```
 
-k6 와 앱이 CPU 를 나눠 쓰면 처리량 수치를 믿을 수 없어 2대로 나눈다.
-
-## 세팅 (최초 1회)
-
-```bash
-# 앱 서버
-sudo apt-get update && sudo apt-get install -y git \
-  && git clone https://github.com/MO-COU/load-test.git \
-  && bash load-test/scripts/setup-app.sh
-
-# k6 서버 — 인자는 앱 서버의 프라이빗 IP
-sudo apt-get update && sudo apt-get install -y git \
-  && git clone https://github.com/MO-COU/load-test.git \
-  && bash load-test/scripts/setup-k6.sh <앱서버-프라이빗-IP>
+```
+부하    0 → 20,000 VU, 60초 램프업 (초당 약 333명)
+재고    10,000장 / 회원 20,000명 — 회원이 재고보다 많아 품절·중복이 발생한다
+자원    커넥션 풀 50 · 워커 스레드 200 · Tomcat max-connections 30,000
+재시도  5회 + 5~19ms 랜덤 백오프 (optimistic, redis-watch)
 ```
 
-`ulimit -n` 이 65535 인지 확인하려면 **재접속**해야 한다.
+`max-connections` 를 크게 잡은 것은 측정용이다. 기본값 8,192 로는 VU 20,000 의
+연결을 다 받지 못해 락과 무관한 에러가 결과를 오염시킨다.
 
-세팅이 홈에 만드는 스크립트들:
+수집은 세 곳에서 동시에 했다.
 
-```
-~/app.sh <브랜치>    브랜치 전환 → 빌드 → 실행
-~/reset.sh [redis]   초기화. redis 인자는 lua/watch 만 (redisson 은 인자 없이)
-~/verify.sh          발급 수 확인
-~/metrics.sh <이름>  커넥션 풀·워커 스레드 1초 단위 수집
-~/dbstat.sh          InnoDB 락 통계
-~/k6.sh <이름>       부하 생성 (k6 서버)
-```
-
-`git switch` 때 사라지지 않도록 저장소가 아닌 홈에 만든다.
-
-## 측정 절차
-
-`<이름>` 은 자유롭게 정한다. 결과가 `~/results/<이름>.txt` 로 저장된다.
-
-```bash
-# ── 앱 서버 ──
-~/app.sh exp/pessimistic-lock       # 브랜치 전환 후 앱 실행
-~/reset.sh redis                    # 초기화
-~/dbstat.sh                         # 측정 전 락 통계 기록
-~/metrics.sh pessimistic            # 지표 수집 시작 (별도 SSH 창에서)
-
-# ── k6 서버 ──
-~/k6.sh pessimistic                 # 부하. 90초쯤 걸린다
-
-# ── 앱 서버 ──
-# metrics.sh 를 Ctrl+C 로 중단
-~/verify.sh                         # 발급 수가 k6 issued 와 맞는지
-~/dbstat.sh                         # 측정 후 락 통계
-```
-
-`reset.sh` 를 빼먹으면 **이전 회차 데이터가 남아 재고가 이미 0이다.** 가장 흔한 실수다.
-
-## 부하 조건 (전 조 통일)
-
-```
-회원 20,000명 (중복 없음)
-재고 10,000장
-ramp-up 60s   0 → 20,000 (초당 약 333명)
-```
-
-어느 지점에서 자원이 포화됐는지는 `metrics.sh` 의 초 단위 기록에서 본다.
-
-```
-1755300020 hikaricp_connections_pending 78.0  tomcat_threads_busy 160.0
-1755300030 hikaricp_connections_pending 150.0 tomcat_threads_busy 200.0   ← 포화
-```
-
-## 볼 지표
-
-| 지표 | 출처 | 의미 |
-|---|---|---|
-| `issued` / 60초 | k6 요약 | **실제 발급 처리량** |
-| `p95` | k6 요약 | 사용자 체감 |
-| `hikaricp_connections_pending` | `metrics.sh` | **커넥션 풀 고갈** |
-| `tomcat_threads_busy` | `metrics.sh` | **워커 스레드 포화** |
-| `Innodb_row_lock_waits` | `dbstat.sh` | 락 경합이 실제로 늘었는지 |
-
-`http_reqs`(TPS)는 쓰지 않는다. **실패한 요청도 세기 때문에** 빨리 포기하는 방식이
-유리하게 나온다. 처리량은 `issued` 로 본다.
-
----
-
-# 브랜치 작업 범위
-
-| 대상 | 수정 |
+| 출처 | 무엇을 말해주는가 |
 |---|---|
-| `CouponIssueService` | **여기만 바꾼다** |
-| `CouponRepository` | 메서드 추가 가능 (`@Lock`, 조건부 `@Query`) |
-| `Coupon` | 낙관적 락 브랜치만 `@Version` 추가 (컬럼은 이미 있다) |
-| `build.gradle` | 의존성 추가 가능 |
-| `CouponIssueController` | 금지 — k6 스크립트와의 계약 |
-| `CouponIssueConcurrencyTest` | 금지 — 통일 사항. Redis 전용 단언만 추가 가능 |
-| `schema.sql`, `application.yaml`, `rush-remote.js`, `docker-compose.yml` | 금지 — 통일 사항 |
+| k6 요약 | 처리량·지연·발급 건수 |
+| Actuator (1초 간격) | 커넥션 풀과 워커 스레드가 실제로 포화됐는지 |
+| MySQL 전역 상태 (측정 전후) | 락 대기와 INSERT·롤백이 얼마나 늘었는지 |
 
-## 통일 조건
+k6 만으로는 "느리다"까지만 알 수 있다. **왜** 느린지는 앱 안의 자원 지표와
+DB 통계를 시각에 맞춰 겹쳐 봐야 나온다.
 
-`application.yaml` 에 있고, 임의로 바꾸면 비교가 성립하지 않는다.
+처리량은 `http_reqs` 가 아니라 `issued` 로 본다. `http_reqs` 는 실패한 요청도
+세기 때문에 빨리 포기하는 방식이 유리하게 나온다.
 
-```
-커넥션 풀        50
-워커 스레드      200
-max-connections  30,000   측정용 값이다. 실무 권장값이 아니다
-재시도           5회 + 5~19ms 랜덤 백오프   (optimistic, redis-watch)
-```
+절차와 재현 방법은 [CONTRIBUTING.md](CONTRIBUTING.md) 에 있다.
 
-### 재시도 정책 (`optimistic`, `redis-watch`)
+## 결과
 
-두 방식은 같은 낙관적 계열이라 **정책이 같아야 비교가 성립한다.**
+| 방식 | 판정 위치 | 처리 req/s | p95 | 발급 | 오류 | 풀 대기 | 행 락 대기 |
+|---|---|---:|---:|---|---:|---:|---:|
+| `pessimistic-lock` | DB | 369 | 47.2s | 10,000 완판 | 0 | 149 | +30,815 |
+| `optimistic` | DB | 134 | 60s+ ⏱ | 7,976 미소진 | 9,799 (81%) | 149 | +87,675 |
+| `atomic-update` | DB | 400 | 43.7s | 10,000 완판 | 0 | 149 | +32,285 |
+| `redisson-rlock` | DB | 149 | 60s+ ⏱ | 9,457 미소진 | 2,839 | 0 (active 1) | 0 |
+| `redis-lua` | 인메모리 | **12,399** | **1.31s** | 10,000 완판 | 0 | 0 | 0 |
+| `redis-watch` | 인메모리 | 10,165 | 1.27s | 10,000 완판 | 3,823 | 0 | 0 |
 
-```java
-5회까지 재시도
-실패할 때마다 Thread.sleep(5 + ThreadLocalRandom.current().nextInt(15));  // 5~19ms
-```
+발급 수는 DB 행 수 기준. `⏱` 는 k6 요청 타임아웃(60초)에 도달해 잘린 값이다.
+`main` 은 정합성을 통과하지 못해 성능을 측정하지 않았다.
 
-### Redis 방식 주의 (`redis-lua`, `redis-watch`)
+방식별 상세 수치와 해석은 [docs/results.md](docs/results.md) 에 있다.
 
-재고 판정을 Redis 가 하므로 **`coupon.issued_count` 를 갱신하지 않는다.**
-모든 요청이 같은 행을 UPDATE 해 직렬화되면 Redis 의 이점이 사라진다.
+## 무엇이 갈랐나
 
-`coupon_issue` INSERT 는 남긴다. 회원마다 다른 행이라 경합하지 않는다.
+**DB 에 도달한 요청 수다.**
 
-`redisson-rlock` 은 락만 Redis 이므로 **카운터를 그대로 쓴다.**
+20,000명이 재고 10,000장을 두고 몰리면 요청의 대부분은 거절이다.
+그런데 DB 판정은 **"품절입니다"라고 답하려고도 DB 에 가야 한다.**
+재고가 남았는지 DB 에 물어봐야 알기 때문이다.
 
----
+| | 총 요청 | DB 커넥션을 잡은 요청 |
+|---|---:|---:|
+| `pessimistic-lock` | 30,838 | **30,838 (전부)** |
+| `redis-lua` | 761,046 | **10,000 (1.3%)** |
 
-# 구조
+커넥션 50개를 두고 3만 건이 줄을 서면 대기 149 가 나오고,
+1만 건만 통과하면 대기 0 이 나온다. 25배 처리량 차이는 그 결과다.
 
-```
-scripts/db/schema.sql   테이블 (최초 1회 자동)
-scripts/db/data.sql     시드 (최초 1회 자동)
-scripts/db/reset.sql    EC2 측정 전 초기화
-scripts/db/verify.sql   테스트·측정 후 결과 확인
-scripts/setup-app.sh    앱 서버 세팅
-scripts/setup-k6.sh     k6 서버 세팅
-load-test/rush-remote.js  성능용 (EC2)
-src/test/.../CouponIssueConcurrencyTest.java  정합성용 (로컬)
-```
+`Com_insert` 가 이를 뒷받침한다. 인메모리 판정은 정확히 10,000 —
+품절·중복 75만 건이 DB 앞에서 끝나 롤백조차 0이다.
 
-`data.sql` 은 `coupon_id=1` 행을 존재하게 만드는 것이 목적이다. 재고 값 자체는
-기본값일 뿐이고, JUnit 은 `@BeforeEach` 가, EC2 는 `~/reset.sh` 가 각자 덮어쓴다.
+### 락을 바꿔도 벗어나지 못한다
 
-`coupon_issue` 에는 `(coupon_id, member_id)` UNIQUE 인덱스가 있다.
-member 테이블과 FK 는 두지 않는다 — FK 가 있으면 INSERT 마다 부모 행에
-shared lock 이 걸려 락 전략 차이와 뒤섞인다.
+`pessimistic` 369 / `atomic` 400 req/s — 8% 차이다.
+
+`SELECT ... FOR UPDATE` 로 걸든 조건부 `UPDATE` 한 문장으로 처리하든,
+**같은 행을 두고 줄을 선다는 구조**는 그대로다. 락을 거는 방법은
+직렬화 구간을 줄일 뿐 없애지 못한다.
+
+### `optimistic` — 재시도가 부하를 키운다
+
+81% 가 실패하고 재고도 다 못 팔았는데, **DB 부하는 6개 중 최다**였다.
+INSERT 8.2만, 롤백 7.5만, 락 대기 8.8만.
+
+충돌한 요청이 되돌아와 다시 경합하면서, 처리량은 낮추고 부하만 늘렸다.
+경합이 심할수록 재시도가 늘고, 재시도가 늘면 경합이 더 심해진다.
+
+### `redisson-rlock` — Redis 를 쓴다고 빨라지지 않는다
+
+이 방식이 분류의 반례다. Redis 를 쓰고도 DB 방식보다 느렸다(149 req/s).
+
+`metrics` 의 `active = 1` 이 원인을 한 줄로 설명한다.
+분산락이 전 요청을 직렬화해 **DB 커넥션을 동시에 1개만 썼다.**
+행 락 대기가 0인 것은 경합을 Redis 로 옮긴 결과지만, 그 대가로 병렬성이 사라졌다.
+
+갈랐던 것은 Redis 사용 여부가 아니라 **무엇을 Redis 로 옮겼는가** 였다.
+재고 판정을 옮기면 요청이 DB 앞에서 걸러지고, 락만 옮기면 DB 는 그대로 병목이다.
+
+## 한계
+
+- 브랜치당 1회 측정이다. 그룹 간 격차(20~30배)는 확정적이지만
+  그룹 안 순위(`lua` vs `watch` 18%, `atomic` vs `pessimistic` 8%)는 노이즈 범위다.
+- 램프업 60초는 초당 333명이 들어오는 조건이라, 실제 이벤트 오픈 순간의
+  순간 폭주는 재현하지 않았다.
+- `coupon_issue` 가 빈 상태에서 시작한다. 이력이 쌓이면 INSERT 비용이 늘어
+  절대 수치는 달라진다.
+- `redis-lua` 도 DB 쓰기가 요청 경로에 남아 있다. p95 1.31초의 대부분이 여기서 나온다.
+  완전히 풀려면 쓰기 비동기화가 다음 단계다.
+
+## 문서
+
+| | |
+|---|---|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 작업 범위·통일 조건·측정 절차 |
+| [docs/results.md](docs/results.md) | 방식별 상세 수치와 해석 |
