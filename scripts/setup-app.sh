@@ -91,12 +91,13 @@ cat > "$HOME/verify.sh" <<'SH'
 set -e
 cd ~/load-test
 
-Q() { sudo docker compose exec -T mysql mysql -N -B -ucoupon -pcoupon1234 coupon -e "$1" 2>/dev/null; }
+# docker exec 직접 호출: compose exec 는 명령 치환 안에서 stdin 때문에 안 끝날 수 있다.
+Q() { sudo docker exec coupon-mysql mysql -N -B -ucoupon -pcoupon1234 coupon -e "$1" 2>/dev/null; }
 
 sudo docker compose exec -T mysql mysql -ucoupon -pcoupon1234 coupon -e "source /scripts/verify.sql"
 
 # 재고 누수 검사 (redis-lua, redis-watch)
-STOCK=$(sudo docker compose exec -T redis redis-cli GET coupon:stock:1 | tr -d '\r')
+STOCK=$(sudo docker exec coupon-redis redis-cli GET coupon:stock:1 | tr -d '\r')
 if [ -z "$STOCK" ]; then
 	echo "재고누수  SKIP  (Redis 재고 키 없음 = DB 전용 브랜치)"
 else
