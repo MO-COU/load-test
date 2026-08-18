@@ -170,7 +170,7 @@ sudo apt-get update && sudo apt-get install -y git \
 
 ```
 ~/app.sh <브랜치>    브랜치 전환 → 빌드 → 실행
-~/reset.sh [redis]   초기화. redis 인자는 lua/watch/redisson 에서
+~/reset.sh [redis]   초기화. redis 인자는 lua/watch 만 (redisson 은 인자 없이)
 ~/verify.sh          발급 수 확인
 ~/metrics.sh <이름>  커넥션 풀·워커 스레드 1초 단위 수집
 ~/dbstat.sh          InnoDB 락 통계
