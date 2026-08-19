@@ -35,7 +35,7 @@ class CouponIssueConcurrencyTest {
 	private static final int CLIENT_RETRY = 300;  // 서버가 포기하면 사용자가 다시 누르듯 재호출
 
 	private final String stockKey = "coupon:stock:" + COUPON_ID;
-	private final String issuedKey = "coupon:issued:" + COUPON_ID;
+	private final String issuedKey = "coupon:issued-members:" + COUPON_ID;
 
 	private static final ThreadFactory DAEMON = r -> {
 		Thread t = new Thread(r);
