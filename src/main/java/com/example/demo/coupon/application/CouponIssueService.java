@@ -58,7 +58,7 @@ public class CouponIssueService {
 
 	public void issue(Long couponId, Long memberId) {
 		String stockKey = "coupon:stock:" + couponId;
-		String issuedKey = "coupon:issued:" + couponId;
+		String issuedKey = "coupon:issued-members:" + couponId;
 		String memberIdStr = String.valueOf(memberId);
 
 		for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
