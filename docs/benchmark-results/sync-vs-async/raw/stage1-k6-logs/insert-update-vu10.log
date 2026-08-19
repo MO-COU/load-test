@@ -1,0 +1,85 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert-then-update.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 10 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert_then_update: 1000 iterations for each of 10 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+running (00m01.0s), 10/10 VUs, 592 complete and 0 interrupted iterations
+insert_then_update   [   6% ] 10 VUs  00m01.0s/10m0s  00592/10000 iters, 1000 per VU
+
+running (00m02.0s), 10/10 VUs, 1247 complete and 0 interrupted iterations
+insert_then_update   [  12% ] 10 VUs  00m02.0s/10m0s  01247/10000 iters, 1000 per VU
+
+running (00m03.0s), 10/10 VUs, 1880 complete and 0 interrupted iterations
+insert_then_update   [  19% ] 10 VUs  00m03.0s/10m0s  01880/10000 iters, 1000 per VU
+
+running (00m04.0s), 10/10 VUs, 2524 complete and 0 interrupted iterations
+insert_then_update   [  25% ] 10 VUs  00m04.0s/10m0s  02524/10000 iters, 1000 per VU
+
+running (00m05.0s), 10/10 VUs, 3103 complete and 0 interrupted iterations
+insert_then_update   [  31% ] 10 VUs  00m05.0s/10m0s  03103/10000 iters, 1000 per VU
+
+running (00m06.0s), 10/10 VUs, 3725 complete and 0 interrupted iterations
+insert_then_update   [  37% ] 10 VUs  00m06.0s/10m0s  03725/10000 iters, 1000 per VU
+
+running (00m07.0s), 10/10 VUs, 4369 complete and 0 interrupted iterations
+insert_then_update   [  44% ] 10 VUs  00m07.0s/10m0s  04369/10000 iters, 1000 per VU
+
+running (00m08.0s), 10/10 VUs, 4993 complete and 0 interrupted iterations
+insert_then_update   [  50% ] 10 VUs  00m08.0s/10m0s  04993/10000 iters, 1000 per VU
+
+running (00m09.0s), 10/10 VUs, 5658 complete and 0 interrupted iterations
+insert_then_update   [  57% ] 10 VUs  00m09.0s/10m0s  05658/10000 iters, 1000 per VU
+
+running (00m10.0s), 10/10 VUs, 6294 complete and 0 interrupted iterations
+insert_then_update   [  63% ] 10 VUs  00m10.0s/10m0s  06294/10000 iters, 1000 per VU
+
+running (00m11.0s), 10/10 VUs, 6930 complete and 0 interrupted iterations
+insert_then_update   [  69% ] 10 VUs  00m11.0s/10m0s  06930/10000 iters, 1000 per VU
+
+running (00m12.0s), 10/10 VUs, 7571 complete and 0 interrupted iterations
+insert_then_update   [  76% ] 10 VUs  00m12.0s/10m0s  07571/10000 iters, 1000 per VU
+
+running (00m13.0s), 10/10 VUs, 8210 complete and 0 interrupted iterations
+insert_then_update   [  82% ] 10 VUs  00m13.0s/10m0s  08210/10000 iters, 1000 per VU
+
+running (00m14.0s), 10/10 VUs, 8859 complete and 0 interrupted iterations
+insert_then_update   [  89% ] 10 VUs  00m14.0s/10m0s  08859/10000 iters, 1000 per VU
+
+running (00m15.0s), 10/10 VUs, 9453 complete and 0 interrupted iterations
+insert_then_update   [  95% ] 10 VUs  00m15.0s/10m0s  09453/10000 iters, 1000 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=7.81ms  min=4.12ms med=7.8ms   max=18.09ms p(90)=9.56ms p(95)=10.37ms
+      { expected_response:true }...: avg=7.81ms  min=4.12ms med=7.8ms   max=18.09ms p(90)=9.56ms p(95)=10.37ms
+    http_req_failed................: 0.00%  0 out of 20000
+    http_reqs......................: 20000  1255.984468/s
+
+    EXECUTION
+    iteration_duration.............: avg=15.79ms min=8.75ms med=15.79ms max=34.61ms p(90)=18.9ms p(95)=20.26ms
+    iterations.....................: 10000  627.992234/s
+    vus............................: 10     min=10         max=10
+    vus_max........................: 10     min=10         max=10
+
+    NETWORK
+    data_received..................: 1.3 MB 80 kB/s
+    data_sent......................: 2.8 MB 178 kB/s
+
+
+
+
+running (00m15.9s), 00/10 VUs, 10000 complete and 0 interrupted iterations
+insert_then_update ✓ [ 100% ] 10 VUs  00m15.9s/10m0s  10000/10000 iters, 1000 per VU

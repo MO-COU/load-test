@@ -1,0 +1,88 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert-then-update.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 10 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert_then_update: 1000 iterations for each of 10 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+running (00m01.0s), 10/10 VUs, 606 complete and 0 interrupted iterations
+insert_then_update   [   6% ] 10 VUs  00m01.0s/10m0s  00606/10000 iters, 1000 per VU
+
+running (00m02.0s), 10/10 VUs, 1250 complete and 0 interrupted iterations
+insert_then_update   [  12% ] 10 VUs  00m02.0s/10m0s  01250/10000 iters, 1000 per VU
+
+running (00m03.0s), 10/10 VUs, 1876 complete and 0 interrupted iterations
+insert_then_update   [  19% ] 10 VUs  00m03.0s/10m0s  01876/10000 iters, 1000 per VU
+
+running (00m04.0s), 10/10 VUs, 2490 complete and 0 interrupted iterations
+insert_then_update   [  25% ] 10 VUs  00m04.0s/10m0s  02490/10000 iters, 1000 per VU
+
+running (00m05.0s), 10/10 VUs, 3066 complete and 0 interrupted iterations
+insert_then_update   [  31% ] 10 VUs  00m05.0s/10m0s  03066/10000 iters, 1000 per VU
+
+running (00m06.0s), 10/10 VUs, 3680 complete and 0 interrupted iterations
+insert_then_update   [  37% ] 10 VUs  00m06.0s/10m0s  03680/10000 iters, 1000 per VU
+
+running (00m07.0s), 10/10 VUs, 4318 complete and 0 interrupted iterations
+insert_then_update   [  43% ] 10 VUs  00m07.0s/10m0s  04318/10000 iters, 1000 per VU
+
+running (00m08.0s), 10/10 VUs, 4912 complete and 0 interrupted iterations
+insert_then_update   [  49% ] 10 VUs  00m08.0s/10m0s  04912/10000 iters, 1000 per VU
+
+running (00m09.0s), 10/10 VUs, 5555 complete and 0 interrupted iterations
+insert_then_update   [  56% ] 10 VUs  00m09.0s/10m0s  05555/10000 iters, 1000 per VU
+
+running (00m10.0s), 10/10 VUs, 6188 complete and 0 interrupted iterations
+insert_then_update   [  62% ] 10 VUs  00m10.0s/10m0s  06188/10000 iters, 1000 per VU
+
+running (00m11.0s), 10/10 VUs, 6830 complete and 0 interrupted iterations
+insert_then_update   [  68% ] 10 VUs  00m11.0s/10m0s  06830/10000 iters, 1000 per VU
+
+running (00m12.0s), 10/10 VUs, 7472 complete and 0 interrupted iterations
+insert_then_update   [  75% ] 10 VUs  00m12.0s/10m0s  07472/10000 iters, 1000 per VU
+
+running (00m13.0s), 10/10 VUs, 8111 complete and 0 interrupted iterations
+insert_then_update   [  81% ] 10 VUs  00m13.0s/10m0s  08111/10000 iters, 1000 per VU
+
+running (00m14.0s), 10/10 VUs, 8742 complete and 0 interrupted iterations
+insert_then_update   [  87% ] 10 VUs  00m14.0s/10m0s  08743/10000 iters, 1000 per VU
+
+running (00m15.0s), 10/10 VUs, 9251 complete and 0 interrupted iterations
+insert_then_update   [  93% ] 10 VUs  00m15.0s/10m0s  09251/10000 iters, 1000 per VU
+
+running (00m16.0s), 10/10 VUs, 9828 complete and 0 interrupted iterations
+insert_then_update   [  98% ] 10 VUs  00m16.0s/10m0s  09828/10000 iters, 1000 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=8.02ms  min=4.03ms med=7.88ms  max=35.15ms p(90)=9.99ms  p(95)=10.91ms
+      { expected_response:true }...: avg=8.02ms  min=4.03ms med=7.88ms  max=35.15ms p(90)=9.99ms  p(95)=10.91ms
+    http_req_failed................: 0.00%  0 out of 20000
+    http_reqs......................: 20000  1222.462952/s
+
+    EXECUTION
+    iteration_duration.............: avg=16.25ms min=9.55ms med=16.05ms max=51.35ms p(90)=19.69ms p(95)=21.12ms
+    iterations.....................: 10000  611.231476/s
+    vus............................: 10     min=10         max=10
+    vus_max........................: 10     min=10         max=10
+
+    NETWORK
+    data_received..................: 1.3 MB 78 kB/s
+    data_sent......................: 2.8 MB 174 kB/s
+
+
+
+
+running (00m16.4s), 00/10 VUs, 10000 complete and 0 interrupted iterations
+insert_then_update ✓ [ 100% ] 10 VUs  00m16.4s/10m0s  10000/10000 iters, 1000 per VU

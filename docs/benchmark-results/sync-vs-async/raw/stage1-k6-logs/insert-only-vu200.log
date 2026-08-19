@@ -1,0 +1,52 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 200 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert: 50 iterations for each of 200 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+running (00m01.0s), 200/200 VUs, 1854 complete and 0 interrupted iterations
+insert   [  19% ] 200 VUs  00m01.0s/10m0s  01854/10000 iters, 50 per VU
+
+running (00m02.0s), 200/200 VUs, 4229 complete and 0 interrupted iterations
+insert   [  42% ] 200 VUs  00m02.0s/10m0s  04229/10000 iters, 50 per VU
+
+running (00m03.0s), 200/200 VUs, 6986 complete and 0 interrupted iterations
+insert   [  70% ] 200 VUs  00m03.0s/10m0s  06986/10000 iters, 50 per VU
+
+running (00m04.0s), 186/200 VUs, 9322 complete and 0 interrupted iterations
+insert   [  93% ] 200 VUs  00m04.0s/10m0s  09322/10000 iters, 50 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=82.47ms min=5.21ms med=79.85ms max=318.13ms p(90)=118.22ms p(95)=133.16ms
+      { expected_response:true }...: avg=82.47ms min=5.21ms med=79.85ms max=318.13ms p(90)=118.22ms p(95)=133.16ms
+    http_req_failed................: 0.00%  0 out of 10000
+    http_reqs......................: 10000  2334.88428/s
+
+    EXECUTION
+    iteration_duration.............: avg=82.95ms min=5.21ms med=80.21ms max=319.21ms p(90)=119.68ms p(95)=134.29ms
+    iterations.....................: 10000  2334.88428/s
+    vus............................: 186    min=186        max=200
+    vus_max........................: 200    min=200        max=200
+
+    NETWORK
+    data_received..................: 730 kB 170 kB/s
+    data_sent......................: 1.4 MB 322 kB/s
+
+
+
+
+running (00m04.3s), 000/200 VUs, 10000 complete and 0 interrupted iterations
+insert ✓ [ 100% ] 200 VUs  00m04.3s/10m0s  10000/10000 iters, 50 per VU

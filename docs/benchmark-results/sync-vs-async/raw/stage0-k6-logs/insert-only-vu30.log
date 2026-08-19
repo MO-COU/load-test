@@ -1,0 +1,55 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert: 334 iterations for each of 30 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+running (00m01.0s), 30/30 VUs, 1869 complete and 0 interrupted iterations
+insert   [  19% ] 30 VUs  00m01.0s/10m0s  01869/10020 iters, 334 per VU
+
+running (00m02.0s), 30/30 VUs, 3960 complete and 0 interrupted iterations
+insert   [  40% ] 30 VUs  00m02.0s/10m0s  03960/10020 iters, 334 per VU
+
+running (00m03.0s), 30/30 VUs, 5938 complete and 0 interrupted iterations
+insert   [  59% ] 30 VUs  00m03.0s/10m0s  05938/10020 iters, 334 per VU
+
+running (00m04.0s), 30/30 VUs, 7922 complete and 0 interrupted iterations
+insert   [  79% ] 30 VUs  00m04.0s/10m0s  07922/10020 iters, 334 per VU
+
+running (00m05.0s), 00/30 VUs, 10020 complete and 0 interrupted iterations
+insert ✓ [ 100% ] 30 VUs  00m05.0s/10m0s  10020/10020 iters, 334 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=14.59ms min=4.67ms med=14.12ms max=82.08ms p(90)=18.78ms p(95)=20.53ms
+      { expected_response:true }...: avg=14.59ms min=4.67ms med=14.12ms max=82.08ms p(90)=18.78ms p(95)=20.53ms
+    http_req_failed................: 0.00%  0 out of 10020
+    http_reqs......................: 10020  2006.374183/s
+
+    EXECUTION
+    iteration_duration.............: avg=14.75ms min=4.67ms med=14.23ms max=90.45ms p(90)=18.99ms p(95)=20.68ms
+    iterations.....................: 10020  2006.374183/s
+    vus............................: 30     min=30         max=30
+    vus_max........................: 30     min=30         max=30
+
+    NETWORK
+    data_received..................: 733 kB 147 kB/s
+    data_sent......................: 1.4 MB 277 kB/s
+
+
+
+
+running (00m05.0s), 00/30 VUs, 10020 complete and 0 interrupted iterations
+insert ✓ [ 100% ] 30 VUs  00m05.0s/10m0s  10020/10020 iters, 334 per VU

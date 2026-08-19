@@ -1,0 +1,93 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert-then-update.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 300 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert_then_update: 34 iterations for each of 300 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=279\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=277\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=292\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=259\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=280\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=278\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=281\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=284\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=286\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=293\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=275\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=295\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=283\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=262\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=287\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=285\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:51:06+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=294\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+
+running (00m01.0s), 300/300 VUs, 670 complete and 0 interrupted iterations
+insert_then_update   [   7% ] 300 VUs  00m01.0s/10m0s  00670/10200 iters, 34 per VU
+
+running (00m02.0s), 300/300 VUs, 1557 complete and 0 interrupted iterations
+insert_then_update   [  15% ] 300 VUs  00m02.0s/10m0s  01557/10200 iters, 34 per VU
+
+running (00m03.0s), 300/300 VUs, 2396 complete and 0 interrupted iterations
+insert_then_update   [  23% ] 300 VUs  00m03.0s/10m0s  02396/10200 iters, 34 per VU
+
+running (00m04.0s), 300/300 VUs, 3245 complete and 0 interrupted iterations
+insert_then_update   [  32% ] 300 VUs  00m04.0s/10m0s  03245/10200 iters, 34 per VU
+
+running (00m05.0s), 300/300 VUs, 4079 complete and 0 interrupted iterations
+insert_then_update   [  40% ] 300 VUs  00m05.0s/10m0s  04079/10200 iters, 34 per VU
+
+running (00m06.0s), 300/300 VUs, 4916 complete and 0 interrupted iterations
+insert_then_update   [  48% ] 300 VUs  00m06.0s/10m0s  04916/10200 iters, 34 per VU
+
+running (00m07.0s), 300/300 VUs, 5788 complete and 0 interrupted iterations
+insert_then_update   [  57% ] 300 VUs  00m07.0s/10m0s  05788/10200 iters, 34 per VU
+
+running (00m08.0s), 300/300 VUs, 6602 complete and 0 interrupted iterations
+insert_then_update   [  65% ] 300 VUs  00m08.0s/10m0s  06602/10200 iters, 34 per VU
+
+running (00m09.0s), 300/300 VUs, 7496 complete and 0 interrupted iterations
+insert_then_update   [  73% ] 300 VUs  00m09.0s/10m0s  07496/10200 iters, 34 per VU
+
+running (00m10.0s), 298/300 VUs, 8302 complete and 0 interrupted iterations
+insert_then_update   [  81% ] 300 VUs  00m10.0s/10m0s  08302/10200 iters, 34 per VU
+
+running (00m11.0s), 257/300 VUs, 9180 complete and 0 interrupted iterations
+insert_then_update   [  90% ] 300 VUs  00m11.0s/10m0s  09180/10200 iters, 34 per VU
+
+running (00m12.0s), 063/300 VUs, 10074 complete and 0 interrupted iterations
+insert_then_update   [  99% ] 300 VUs  00m12.0s/10m0s  10074/10200 iters, 34 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=169.2ms  min=0s      med=141.91ms max=1.09s p(90)=324.92ms p(95)=412.13ms
+      { expected_response:true }...: avg=169.32ms min=11.24ms med=141.93ms max=1.09s p(90)=324.89ms p(95)=412.15ms
+    http_req_failed................: 0.16%  34 out of 20400
+    http_reqs......................: 20400  1674.778602/s
+
+    EXECUTION
+    iteration_duration.............: avg=339.38ms min=27.75ms med=305.05ms max=1.59s p(90)=566.03ms p(95)=672.12ms
+    iterations.....................: 10200  837.389301/s
+    vus............................: 63     min=63          max=300
+    vus_max........................: 300    min=300         max=300
+
+    NETWORK
+    data_received..................: 1.3 MB 106 kB/s
+    data_sent......................: 2.9 MB 238 kB/s
+
+
+
+
+running (00m12.2s), 000/300 VUs, 10200 complete and 0 interrupted iterations
+insert_then_update ✓ [ 100% ] 300 VUs  00m12.2s/10m0s  10200/10200 iters, 34 per VU

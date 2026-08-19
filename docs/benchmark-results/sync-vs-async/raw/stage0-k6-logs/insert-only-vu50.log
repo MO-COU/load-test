@@ -1,0 +1,49 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 50 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert: 200 iterations for each of 50 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+running (00m01.0s), 50/50 VUs, 2343 complete and 0 interrupted iterations
+insert   [  23% ] 50 VUs  00m01.0s/10m0s  02343/10000 iters, 200 per VU
+
+running (00m02.0s), 50/50 VUs, 4956 complete and 0 interrupted iterations
+insert   [  50% ] 50 VUs  00m02.0s/10m0s  04956/10000 iters, 200 per VU
+
+running (00m03.0s), 50/50 VUs, 7727 complete and 0 interrupted iterations
+insert   [  77% ] 50 VUs  00m03.0s/10m0s  07727/10000 iters, 200 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=18.98ms min=7.28ms med=18.45ms max=38.89ms p(90)=24.15ms p(95)=26.15ms
+      { expected_response:true }...: avg=18.98ms min=7.28ms med=18.45ms max=38.89ms p(90)=24.15ms p(95)=26.15ms
+    http_req_failed................: 0.00%  0 out of 10000
+    http_reqs......................: 10000  2585.993864/s
+
+    EXECUTION
+    iteration_duration.............: avg=19.16ms min=7.28ms med=18.59ms max=38.89ms p(90)=24.44ms p(95)=26.6ms 
+    iterations.....................: 10000  2585.993864/s
+    vus............................: 50     min=50         max=50
+    vus_max........................: 50     min=50         max=50
+
+    NETWORK
+    data_received..................: 732 kB 189 kB/s
+    data_sent......................: 1.4 MB 357 kB/s
+
+
+
+
+running (00m03.9s), 00/50 VUs, 10000 complete and 0 interrupted iterations
+insert ✓ [ 100% ] 50 VUs  00m03.9s/10m0s  10000/10000 iters, 200 per VU

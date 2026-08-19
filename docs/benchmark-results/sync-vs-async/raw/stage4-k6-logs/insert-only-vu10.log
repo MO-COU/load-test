@@ -1,0 +1,103 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 10 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert: 1000 iterations for each of 10 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+running (00m01.0s), 10/10 VUs, 471 complete and 0 interrupted iterations
+insert   [   5% ] 10 VUs  00m01.0s/10m0s  00471/10000 iters, 1000 per VU
+
+running (00m02.0s), 10/10 VUs, 905 complete and 0 interrupted iterations
+insert   [   9% ] 10 VUs  00m02.0s/10m0s  00905/10000 iters, 1000 per VU
+
+running (00m03.0s), 10/10 VUs, 1365 complete and 0 interrupted iterations
+insert   [  14% ] 10 VUs  00m03.0s/10m0s  01365/10000 iters, 1000 per VU
+
+running (00m04.0s), 10/10 VUs, 1869 complete and 0 interrupted iterations
+insert   [  19% ] 10 VUs  00m04.0s/10m0s  01869/10000 iters, 1000 per VU
+
+running (00m05.0s), 10/10 VUs, 2340 complete and 0 interrupted iterations
+insert   [  23% ] 10 VUs  00m05.0s/10m0s  02340/10000 iters, 1000 per VU
+
+running (00m06.0s), 10/10 VUs, 2808 complete and 0 interrupted iterations
+insert   [  28% ] 10 VUs  00m06.0s/10m0s  02808/10000 iters, 1000 per VU
+
+running (00m07.0s), 10/10 VUs, 3292 complete and 0 interrupted iterations
+insert   [  33% ] 10 VUs  00m07.0s/10m0s  03292/10000 iters, 1000 per VU
+
+running (00m08.0s), 10/10 VUs, 3753 complete and 0 interrupted iterations
+insert   [  38% ] 10 VUs  00m08.0s/10m0s  03753/10000 iters, 1000 per VU
+
+running (00m09.0s), 10/10 VUs, 4214 complete and 0 interrupted iterations
+insert   [  42% ] 10 VUs  00m09.0s/10m0s  04214/10000 iters, 1000 per VU
+
+running (00m10.0s), 10/10 VUs, 4665 complete and 0 interrupted iterations
+insert   [  47% ] 10 VUs  00m10.0s/10m0s  04665/10000 iters, 1000 per VU
+
+running (00m11.0s), 10/10 VUs, 5106 complete and 0 interrupted iterations
+insert   [  51% ] 10 VUs  00m11.0s/10m0s  05106/10000 iters, 1000 per VU
+
+running (00m12.0s), 10/10 VUs, 5513 complete and 0 interrupted iterations
+insert   [  55% ] 10 VUs  00m12.0s/10m0s  05513/10000 iters, 1000 per VU
+
+running (00m13.0s), 10/10 VUs, 6015 complete and 0 interrupted iterations
+insert   [  60% ] 10 VUs  00m13.0s/10m0s  06015/10000 iters, 1000 per VU
+
+running (00m14.0s), 10/10 VUs, 6520 complete and 0 interrupted iterations
+insert   [  65% ] 10 VUs  00m14.0s/10m0s  06520/10000 iters, 1000 per VU
+
+running (00m15.0s), 10/10 VUs, 7015 complete and 0 interrupted iterations
+insert   [  70% ] 10 VUs  00m15.0s/10m0s  07015/10000 iters, 1000 per VU
+
+running (00m16.0s), 10/10 VUs, 7450 complete and 0 interrupted iterations
+insert   [  74% ] 10 VUs  00m16.0s/10m0s  07450/10000 iters, 1000 per VU
+
+running (00m17.0s), 10/10 VUs, 7884 complete and 0 interrupted iterations
+insert   [  79% ] 10 VUs  00m17.0s/10m0s  07884/10000 iters, 1000 per VU
+
+running (00m18.0s), 10/10 VUs, 8287 complete and 0 interrupted iterations
+insert   [  83% ] 10 VUs  00m18.0s/10m0s  08287/10000 iters, 1000 per VU
+
+running (00m19.0s), 10/10 VUs, 8793 complete and 0 interrupted iterations
+insert   [  88% ] 10 VUs  00m19.0s/10m0s  08793/10000 iters, 1000 per VU
+
+running (00m20.0s), 10/10 VUs, 9258 complete and 0 interrupted iterations
+insert   [  93% ] 10 VUs  00m20.0s/10m0s  09258/10000 iters, 1000 per VU
+
+running (00m21.0s), 10/10 VUs, 9756 complete and 0 interrupted iterations
+insert   [  98% ] 10 VUs  00m21.0s/10m0s  09756/10000 iters, 1000 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=21.4ms  min=9.09ms med=19.27ms max=83.34ms p(90)=28.99ms p(95)=32.06ms
+      { expected_response:true }...: avg=21.4ms  min=9.09ms med=19.27ms max=83.34ms p(90)=28.99ms p(95)=32.06ms
+    http_req_failed................: 0.00%  0 out of 10000
+    http_reqs......................: 10000  461.688613/s
+
+    EXECUTION
+    iteration_duration.............: avg=21.52ms min=9.42ms med=19.35ms max=84.35ms p(90)=29.1ms  p(95)=32.46ms
+    iterations.....................: 10000  461.688613/s
+    vus............................: 10     min=10         max=10
+    vus_max........................: 10     min=10         max=10
+
+    NETWORK
+    data_received..................: 732 kB 34 kB/s
+    data_sent......................: 1.4 MB 64 kB/s
+
+
+
+
+running (00m21.7s), 00/10 VUs, 10000 complete and 0 interrupted iterations
+insert ✓ [ 100% ] 10 VUs  00m21.7s/10m0s  10000/10000 iters, 1000 per VU

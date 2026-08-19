@@ -1,0 +1,94 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 400 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert: 25 iterations for each of 400 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=129\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=220\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=28\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=204\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=233\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=251\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=159\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=215\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=29\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=212\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=201\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=256\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=218\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=37\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=214\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=211\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=181\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=228\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=225\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=30\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=200\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=230\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=234\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=229\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=232\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=221\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=31\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=235\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=134\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=136\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=226\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=217\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=227\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=253\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=25\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=93\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=223\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=90\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=224\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=255\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=216\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=219\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=203\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=33\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+time="2026-08-19T11:40:16+09:00" level=warning msg="Request Failed" error="Post \"http://localhost:8080/benchmark/coupon-issues?couponId=4&memberId=366\": dial tcp 127.0.0.1:8080: connectex: No connection could be made because the target machine actively refused it."
+
+running (00m01.0s), 400/400 VUs, 2347 complete and 0 interrupted iterations
+insert   [  23% ] 400 VUs  00m01.0s/10m0s  02347/10000 iters, 25 per VU
+
+running (00m02.0s), 400/400 VUs, 5234 complete and 0 interrupted iterations
+insert   [  52% ] 400 VUs  00m02.0s/10m0s  05234/10000 iters, 25 per VU
+
+running (00m03.0s), 392/400 VUs, 8436 complete and 0 interrupted iterations
+insert   [  84% ] 400 VUs  00m03.0s/10m0s  08436/10000 iters, 25 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=132.28ms min=0s     med=123.95ms max=718.77ms p(90)=207.66ms p(95)=252.01ms
+      { expected_response:true }...: avg=132.88ms min=5.26ms med=124.21ms max=718.77ms p(90)=207.88ms p(95)=252.28ms
+    http_req_failed................: 0.44%  45 out of 10000
+    http_reqs......................: 10000  2819.751979/s
+
+    EXECUTION
+    iteration_duration.............: avg=133.52ms min=5.78ms med=124.37ms max=718.77ms p(90)=208.17ms p(95)=252.81ms
+    iterations.....................: 10000  2819.751979/s
+    vus............................: 392    min=392         max=400
+    vus_max........................: 400    min=400         max=400
+
+    NETWORK
+    data_received..................: 727 kB 205 kB/s
+    data_sent......................: 1.4 MB 387 kB/s
+
+
+
+
+running (00m03.5s), 000/400 VUs, 10000 complete and 0 interrupted iterations
+insert ✓ [ 100% ] 400 VUs  00m03.5s/10m0s  10000/10000 iters, 25 per VU

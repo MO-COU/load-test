@@ -7,3 +7,18 @@ spring:
     url: jdbc:mysql://${LARGE_DB_HOST:localhost}:${LARGE_DB_PORT:3307}/${LARGE_DB_NAME:coupon_large}?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
     username: ${LARGE_DB_USERNAME:coupon_large}
     password: ${LARGE_DB_PASSWORD:coupon-large-1234}
+
+server:
+  tomcat:
+    # 스레드풀 사용률(tomcat_threads_busy) 확인을 위한 mbean 등록.
+    # 이게 없으면 HikariCP 지표만 보이고 Tomcat 워커 스레드 포화는 안 잡힌다.
+    mbean-registry:
+      enabled: true
+
+# 측정 대상 지표: hikaricp_connections_active/pending, tomcat_threads_busy 등.
+# k6 부하 중 /actuator/prometheus 를 긁어 커넥션 풀·워커 스레드 사용량을 기록한다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_EXPOSURE:prometheus,metrics,health}

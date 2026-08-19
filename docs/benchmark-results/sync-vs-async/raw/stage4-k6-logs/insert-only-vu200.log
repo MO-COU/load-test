@@ -1,0 +1,58 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 200 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert: 50 iterations for each of 200 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+running (00m01.0s), 200/200 VUs, 1638 complete and 0 interrupted iterations
+insert   [  16% ] 200 VUs  00m01.0s/10m0s  01640/10000 iters, 50 per VU
+
+running (00m02.0s), 200/200 VUs, 2986 complete and 0 interrupted iterations
+insert   [  30% ] 200 VUs  00m02.0s/10m0s  02986/10000 iters, 50 per VU
+
+running (00m03.0s), 200/200 VUs, 4594 complete and 0 interrupted iterations
+insert   [  46% ] 200 VUs  00m03.0s/10m0s  04594/10000 iters, 50 per VU
+
+running (00m04.0s), 200/200 VUs, 6013 complete and 0 interrupted iterations
+insert   [  60% ] 200 VUs  00m04.0s/10m0s  06013/10000 iters, 50 per VU
+
+running (00m05.0s), 200/200 VUs, 7352 complete and 0 interrupted iterations
+insert   [  74% ] 200 VUs  00m05.0s/10m0s  07352/10000 iters, 50 per VU
+
+running (00m06.0s), 198/200 VUs, 8801 complete and 0 interrupted iterations
+insert   [  88% ] 200 VUs  00m06.0s/10m0s  08801/10000 iters, 50 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=129.43ms min=12.11ms med=119.81ms max=543.5ms p(90)=207.83ms p(95)=262.26ms
+      { expected_response:true }...: avg=129.43ms min=12.11ms med=119.81ms max=543.5ms p(90)=207.83ms p(95)=262.26ms
+    http_req_failed................: 0.00%  0 out of 10000
+    http_reqs......................: 10000  1485.094044/s
+
+    EXECUTION
+    iteration_duration.............: avg=129.91ms min=12.11ms med=120.13ms max=543.5ms p(90)=208.34ms p(95)=262.27ms
+    iterations.....................: 10000  1485.094044/s
+    vus............................: 198    min=198        max=200
+    vus_max........................: 200    min=200        max=200
+
+    NETWORK
+    data_received..................: 730 kB 108 kB/s
+    data_sent......................: 1.4 MB 205 kB/s
+
+
+
+
+running (00m06.7s), 000/200 VUs, 10000 complete and 0 interrupted iterations
+insert ✓ [ 100% ] 200 VUs  00m06.7s/10m0s  10000/10000 iters, 50 per VU

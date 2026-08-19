@@ -1,0 +1,61 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert-then-update.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 200 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert_then_update: 50 iterations for each of 200 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+running (00m01.0s), 200/200 VUs, 1134 complete and 0 interrupted iterations
+insert_then_update   [  11% ] 200 VUs  00m01.0s/10m0s  01134/10000 iters, 50 per VU
+
+running (00m02.0s), 200/200 VUs, 2385 complete and 0 interrupted iterations
+insert_then_update   [  24% ] 200 VUs  00m02.0s/10m0s  02385/10000 iters, 50 per VU
+
+running (00m03.0s), 200/200 VUs, 3698 complete and 0 interrupted iterations
+insert_then_update   [  37% ] 200 VUs  00m03.0s/10m0s  03698/10000 iters, 50 per VU
+
+running (00m04.0s), 200/200 VUs, 5141 complete and 0 interrupted iterations
+insert_then_update   [  51% ] 200 VUs  00m04.0s/10m0s  05141/10000 iters, 50 per VU
+
+running (00m05.0s), 200/200 VUs, 6609 complete and 0 interrupted iterations
+insert_then_update   [  66% ] 200 VUs  00m05.0s/10m0s  06609/10000 iters, 50 per VU
+
+running (00m06.0s), 200/200 VUs, 8068 complete and 0 interrupted iterations
+insert_then_update   [  81% ] 200 VUs  00m06.0s/10m0s  08068/10000 iters, 50 per VU
+
+running (00m07.0s), 183/200 VUs, 9481 complete and 0 interrupted iterations
+insert_then_update   [  95% ] 200 VUs  00m07.0s/10m0s  09481/10000 iters, 50 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=71.59ms  min=5.38ms  med=69.68ms  max=265.45ms p(90)=96.69ms  p(95)=117.61ms
+      { expected_response:true }...: avg=71.59ms  min=5.38ms  med=69.68ms  max=265.45ms p(90)=96.69ms  p(95)=117.61ms
+    http_req_failed................: 0.00%  0 out of 20000
+    http_reqs......................: 20000  2725.297258/s
+
+    EXECUTION
+    iteration_duration.............: avg=143.69ms min=10.86ms med=141.14ms max=367.65ms p(90)=192.39ms p(95)=207.06ms
+    iterations.....................: 10000  1362.648629/s
+    vus............................: 183    min=183        max=200
+    vus_max........................: 200    min=200        max=200
+
+    NETWORK
+    data_received..................: 1.3 MB 174 kB/s
+    data_sent......................: 2.8 MB 387 kB/s
+
+
+
+
+running (00m07.3s), 000/200 VUs, 10000 complete and 0 interrupted iterations
+insert_then_update ✓ [ 100% ] 200 VUs  00m07.3s/10m0s  10000/10000 iters, 50 per VU

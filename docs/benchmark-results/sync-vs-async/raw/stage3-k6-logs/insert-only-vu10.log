@@ -1,0 +1,64 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 10 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert: 1000 iterations for each of 10 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+running (00m01.0s), 10/10 VUs, 898 complete and 0 interrupted iterations
+insert   [   9% ] 10 VUs  00m01.0s/10m0s  00898/10000 iters, 1000 per VU
+
+running (00m02.0s), 10/10 VUs, 2124 complete and 0 interrupted iterations
+insert   [  21% ] 10 VUs  00m02.0s/10m0s  02124/10000 iters, 1000 per VU
+
+running (00m03.0s), 10/10 VUs, 3416 complete and 0 interrupted iterations
+insert   [  34% ] 10 VUs  00m03.0s/10m0s  03416/10000 iters, 1000 per VU
+
+running (00m04.0s), 10/10 VUs, 4672 complete and 0 interrupted iterations
+insert   [  47% ] 10 VUs  00m04.0s/10m0s  04672/10000 iters, 1000 per VU
+
+running (00m05.0s), 10/10 VUs, 5862 complete and 0 interrupted iterations
+insert   [  59% ] 10 VUs  00m05.0s/10m0s  05862/10000 iters, 1000 per VU
+
+running (00m06.0s), 10/10 VUs, 6990 complete and 0 interrupted iterations
+insert   [  70% ] 10 VUs  00m06.0s/10m0s  06990/10000 iters, 1000 per VU
+
+running (00m07.0s), 10/10 VUs, 8288 complete and 0 interrupted iterations
+insert   [  83% ] 10 VUs  00m07.0s/10m0s  08288/10000 iters, 1000 per VU
+
+running (00m08.0s), 10/10 VUs, 9551 complete and 0 interrupted iterations
+insert   [  96% ] 10 VUs  00m08.0s/10m0s  09551/10000 iters, 1000 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=8.22ms min=4.11ms med=7.93ms max=33.22ms p(90)=10.41ms p(95)=11.58ms
+      { expected_response:true }...: avg=8.22ms min=4.11ms med=7.93ms max=33.22ms p(90)=10.41ms p(95)=11.58ms
+    http_req_failed................: 0.00%  0 out of 10000
+    http_reqs......................: 10000  1193.046339/s
+
+    EXECUTION
+    iteration_duration.............: avg=8.32ms min=4.12ms med=7.99ms max=33.22ms p(90)=10.55ms p(95)=11.7ms 
+    iterations.....................: 10000  1193.046339/s
+    vus............................: 10     min=10         max=10
+    vus_max........................: 10     min=10         max=10
+
+    NETWORK
+    data_received..................: 732 kB 87 kB/s
+    data_sent......................: 1.4 MB 165 kB/s
+
+
+
+
+running (00m08.4s), 00/10 VUs, 10000 complete and 0 interrupted iterations
+insert ✓ [ 100% ] 10 VUs  00m08.4s/10m0s  10000/10000 iters, 1000 per VU
