@@ -22,3 +22,16 @@ management:
     web:
       exposure:
         include: ${MANAGEMENT_EXPOSURE:prometheus,metrics,health}
+
+# 비동기 적재 컨슈머(AsyncCouponIssueConsumer) 배치 설정.
+# 값을 고른 이유와 상세 설명은 AsyncCouponIssueConsumer 클래스 주석 참고.
+#   batch-size: 1로 두면 배치가 없는 것과 같다(1단계: 분리 효과만 측정).
+#               기본값 100은 배치 효과를 보기 위한 값(2단계)이며,
+#               "가장 효율적인 값을 찾는 튜닝"의 결과가 아니다 — 이번
+#               실험은 배치 적용 여부에 따른 성능 개선 유무만 본다.
+#   batch-interval-ms: 요청이 뜸할 때 배치가 안 차서 무한정 기다리는
+#               것을 막는 상한(100ms).
+benchmark:
+  async:
+    batch-size: ${BENCHMARK_BATCH_SIZE:100}
+    batch-interval-ms: ${BENCHMARK_BATCH_INTERVAL_MS:100}

@@ -1,0 +1,38 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert-async.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 200 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert_async: 50 iterations for each of 200 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=7.96ms min=0s med=5.02ms max=79.47ms  p(90)=18.03ms p(95)=25.86ms
+      { expected_response:true }...: avg=7.96ms min=0s med=5.02ms max=79.47ms  p(90)=18.03ms p(95)=25.86ms
+    http_req_failed................: 0.00%  0 out of 10000
+    http_reqs......................: 10000  18224.815492/s
+
+    EXECUTION
+    iteration_duration.............: avg=9.8ms  min=0s med=5.83ms max=123.69ms p(90)=22.47ms p(95)=30.32ms
+    iterations.....................: 10000  18224.815492/s
+
+    NETWORK
+    data_received..................: 730 kB 1.3 MB/s
+    data_sent......................: 1.4 MB 2.6 MB/s
+
+
+
+
+running (00m00.5s), 000/200 VUs, 10000 complete and 0 interrupted iterations
+insert_async ✓ [ 100% ] 200 VUs  00m00.5s/10m0s  10000/10000 iters, 50 per VU

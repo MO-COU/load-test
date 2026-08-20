@@ -1,0 +1,43 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: load-test/large-db-insert-then-update-async.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 50 max VUs, 10m30s max duration (incl. graceful stop):
+              * insert_then_update_async: 200 iterations for each of 50 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+
+running (00m01.0s), 36/50 VUs, 9551 complete and 0 interrupted iterations
+insert_then_update_async   [  96% ] 50 VUs  00m01.0s/10m0s  09551/10000 iters, 200 per VU
+
+
+  █ TOTAL RESULTS 
+
+    HTTP
+    http_req_duration..............: avg=2.02ms min=0s med=1.51ms max=36.24ms p(90)=4.05ms p(95)=5.23ms 
+      { expected_response:true }...: avg=2.02ms min=0s med=1.51ms max=36.24ms p(90)=4.05ms p(95)=5.23ms 
+    http_req_failed................: 0.00%  0 out of 20000
+    http_reqs......................: 20000  19025.248979/s
+
+    EXECUTION
+    iteration_duration.............: avg=4.96ms min=0s med=3.85ms max=41.87ms p(90)=9.28ms p(95)=13.28ms
+    iterations.....................: 10000  9512.624489/s
+    vus............................: 36     min=36         max=36
+    vus_max........................: 50     min=50         max=50
+
+    NETWORK
+    data_received..................: 1.5 MB 1.4 MB/s
+    data_sent......................: 3.0 MB 2.8 MB/s
+
+
+
+
+running (00m01.1s), 00/50 VUs, 10000 complete and 0 interrupted iterations
+insert_then_update_async ✓ [ 100% ] 50 VUs  00m01.1s/10m0s  10000/10000 iters, 200 per VU
