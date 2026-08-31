@@ -27,12 +27,16 @@ fi
 echo "▶ [1.5/4] 임시 포트 범위"
 # VU 20000 이면 한 대상 IP 로 동시 연결 2만 개를 연다.
 # 기본 범위(32768-60999)는 약 2.8만 개뿐이라 TIME_WAIT 이 쌓이면 고갈된다.
-if [ -f /etc/sysctl.d/99-k6.conf ]; then
-	echo "   이미 설정됨 ($(cat /proc/sys/net/ipv4/ip_local_port_range))"
-else
-	echo 'net.ipv4.ip_local_port_range = 1024 65535' | sudo tee /etc/sysctl.d/99-k6.conf >/dev/null
-	sudo sysctl -p /etc/sysctl.d/99-k6.conf
-fi
+CONF=/etc/sysctl.d/99-k6.conf
+sudo touch "$CONF"
+# 파일 존재로 건너뛰면 나중에 추가한 항목이 기존 서버에 반영되지 않는다. 항목별로 확인한다.
+grep -q ip_local_port_range "$CONF" \
+	|| echo 'net.ipv4.ip_local_port_range = 1024 65535' | sudo tee -a "$CONF" >/dev/null
+# 소켓 2만 개가 TIME_WAIT 로 60초간 포트를 잡는다. 연달아 측정하면 모자란다.
+grep -q tcp_tw_reuse "$CONF" \
+	|| echo 'net.ipv4.tcp_tw_reuse = 1' | sudo tee -a "$CONF" >/dev/null
+sudo sysctl -p "$CONF" >/dev/null
+echo "   포트범위=$(sysctl -n net.ipv4.ip_local_port_range) tw_reuse=$(sysctl -n net.ipv4.tcp_tw_reuse)"
 
 echo "▶ [2/4] git, k6"
 sudo apt-get update -qq
@@ -71,7 +75,8 @@ SH
 cd ~/load-test
 mkdir -p ~/results
 OUT=~/results/${1:-result}.txt
-k6 run load-test/rush-remote.js 2>&1 | tee "$OUT"
+
+k6 run load-test/rush-spike.js 2>&1 | tee "$OUT"
 echo
 echo "▶ 저장됨: $OUT"
 SH

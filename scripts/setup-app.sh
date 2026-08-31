@@ -12,7 +12,7 @@ set -euo pipefail
 REPO_URL="https://github.com/MO-COU/load-test.git"
 REPO="$HOME/load-test"
 
-echo "▶ [1/5] 파일 디스크립터 한도"
+echo "▶ [1/6] 파일 디스크립터 한도"
 if grep -q "nofile 65535" /etc/security/limits.conf; then
 	echo "   이미 설정됨 (현재 세션: $(ulimit -n))"
 else
@@ -23,7 +23,16 @@ EOF
 	echo "   설정함. 재접속해야 적용된다."
 fi
 
-echo "▶ [2/5] git, curl, JDK 21"
+echo "▶ [1.5/6] 커널 연결 큐"
+# 2만 개 연결이 한꺼번에 도착한다. somaxconn 이 accept-count(32768)보다 작으면
+# Tomcat 설정이 조용히 깎이므로 함께 올린다.
+sudo sysctl -w net.core.somaxconn=32768 >/dev/null
+sudo sysctl -w net.ipv4.tcp_max_syn_backlog=32768 >/dev/null
+echo 'net.core.somaxconn = 32768' | sudo tee /etc/sysctl.d/99-coupon.conf >/dev/null
+echo 'net.ipv4.tcp_max_syn_backlog = 32768' | sudo tee -a /etc/sysctl.d/99-coupon.conf >/dev/null
+echo "   somaxconn=$(cat /proc/sys/net/core/somaxconn) syn_backlog=$(cat /proc/sys/net/ipv4/tcp_max_syn_backlog)"
+
+echo "▶ [2/6] git, curl, JDK 21"
 sudo apt-get update -qq
 command -v git >/dev/null || sudo apt-get install -y git
 # metrics.sh 가 쓰므로 docker 설치 여부와 무관하게 확보한다.
@@ -34,7 +43,7 @@ else
 	sudo apt-get install -y openjdk-21-jdk
 fi
 
-echo "▶ [3/5] docker + compose"
+echo "▶ [3/6] docker + compose"
 if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then
 	echo "   이미 설치됨"
 else
@@ -48,7 +57,7 @@ else
 	sudo apt-get install -y docker-ce docker-compose-plugin
 fi
 
-echo "▶ [4/5] 저장소 + 실행 스크립트"
+echo "▶ [4/6] 저장소 + 실행 스크립트"
 [ -d "$REPO/.git" ] || git clone "$REPO_URL" "$REPO"
 
 # 저장소 안에 두면 git switch 때 사라지므로 홈에 만든다.
@@ -138,10 +147,28 @@ SHOW GLOBAL STATUS WHERE Variable_name IN (
   'Com_insert','Com_update','Com_rollback');"
 SH
 
+cat > "$HOME/drain.sh" <<'SH'
+#!/usr/bin/env bash
+# 부하 종료 후 판정 전에 실행. k6 가 타임아웃으로 포기해도 서버는 계속 처리하므로,
+# 발급 행 수가 멈출 때까지 기다린 뒤 세야 실제 발급 수가 나온다.
+cd ~/load-test
+Q() { docker exec coupon-mysql mysql -N -B -ucoupon -pcoupon1234 coupon -e "$1" 2>/dev/null; }
+PREV=-1; STABLE=0
+for i in $(seq 1 36); do
+	N=$(Q "SELECT COUNT(*) FROM coupon_issue WHERE coupon_id=1")
+	[ "$N" = "$PREV" ] && STABLE=$((STABLE+1)) || STABLE=0
+	PREV=$N
+	[ "$STABLE" -ge 2 ] && { echo "▶ 배수 완료: 발급 $N"; exit 0; }
+	sleep 5
+done
+echo "▶ 배수 타임아웃: 발급 $PREV"
+SH
+
+chmod +x "$HOME"/drain.sh
 chmod +x "$HOME"/app.sh "$HOME"/reset.sh "$HOME"/verify.sh "$HOME"/metrics.sh "$HOME"/dbstat.sh
 echo "   ~/app.sh  ~/reset.sh  ~/verify.sh  ~/metrics.sh  ~/dbstat.sh 생성함"
 
-echo "▶ [5/5] MySQL / Redis"
+echo "▶ [5/6] MySQL / Redis"
 cd "$REPO"
 sudo docker compose up -d
 sudo docker compose ps

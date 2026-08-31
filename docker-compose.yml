@@ -3,7 +3,7 @@ services:
     image: mysql:8.0.36
     container_name: coupon-mysql
     ports:
-      - "3306:3306"
+      - "${MYSQL_HOST_PORT:-3306}:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root1234
       MYSQL_DATABASE: coupon
@@ -35,7 +35,7 @@ services:
     image: redis:8.8.1-alpine
     container_name: coupon-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_HOST_PORT:-6379}:6379"
     command: redis-server --maxmemory-policy noeviction
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]

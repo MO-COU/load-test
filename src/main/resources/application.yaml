@@ -8,7 +8,8 @@ spring:
     password: ${DB_PASSWORD:coupon1234}
     hikari:
       # 통일 사항. 브랜치별로 바꾸면 비교가 성립하지 않는다.
-      maximum-pool-size: ${DB_POOL_SIZE:50}
+      # HikariCP 권장식 (코어 8 × 2). 코어보다 많은 커넥션은 DB 안에서 경쟁만 늘린다.
+      maximum-pool-size: ${DB_POOL_SIZE:16}
       connection-timeout: ${DB_CONNECTION_TIMEOUT:10000}
 
   jpa:
@@ -34,7 +35,10 @@ server:
     threads:
       # 통일 사항.
       max: ${TOMCAT_MAX_THREADS:200}
-    accept-count: ${TOMCAT_ACCEPT_COUNT:100}
+    # 2만 개가 한꺼번에 도착하면 기본값 100 은 넘친다. 넘친 연결은 커널이 버려
+    # 클라이언트가 1초 뒤 재전송하고, 그 1초가 응답 시간에 얹힌다.
+    # OS 의 somaxconn 이 이 값보다 작으면 조용히 깎이므로 함께 올려야 한다.
+    accept-count: ${TOMCAT_ACCEPT_COUNT:32768}
     # 통일 사항. 기본값 8192 로는 VU 20000 의 연결을 다 받지 못한다.
     max-connections: ${TOMCAT_MAX_CONNECTIONS:30000}
     # 스레드풀 사용률 확인을 위한 mbean 등록
