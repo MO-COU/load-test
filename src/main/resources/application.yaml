@@ -46,6 +46,9 @@ server:
       enabled: true
 # ~/metrics.sh 가 /actuator/prometheus 를 긁는다.
 management:
+  server:
+    # 지표 수집이 워커 스레드 경합에 걸리지 않게 커넥터를 분리한다.
+    port: ${MANAGEMENT_SERVER_PORT:19090}
   endpoints:
     web:
       exposure:

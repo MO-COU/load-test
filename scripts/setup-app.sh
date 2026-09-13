@@ -63,15 +63,23 @@ echo "▶ [4/6] 저장소 + 실행 스크립트"
 # 저장소 안에 두면 git switch 때 사라지므로 홈에 만든다.
 cat > "$HOME/app.sh" <<'SH'
 #!/usr/bin/env bash
-# 브랜치 전환 후 앱 실행:  ~/app.sh exp/pessimistic-lock
+# 브랜치 전환 → 빌드 → 백그라운드 실행:  ~/app.sh exp/pessimistic-lock
 set -e
 cd ~/load-test
 git switch "$1"
-./gradlew clean bootJar
-echo
+./gradlew -q clean bootJar
 echo "▶ 브랜치 $(git branch --show-current) / 커밋 $(git rev-parse --short HEAD)"
-echo
-java -jar build/libs/*.jar
+ulimit -n 65535
+nohup java -jar build/libs/*.jar > ~/app.log 2>&1 &
+echo "▶ pid $! · 로그 ~/app.log"
+SH
+
+cat > "$HOME/stop.sh" <<'SH'
+#!/usr/bin/env bash
+# 앱 중지:  ~/stop.sh
+pkill -f 'java -jar build/libs' || true
+sleep 3
+echo "▶ 앱 중지"
 SH
 
 cat > "$HOME/reset.sh" <<'SH'
@@ -122,18 +130,18 @@ SH
 
 cat > "$HOME/metrics.sh" <<'SH'
 #!/usr/bin/env bash
-# 자원 사용률 수집:  ~/metrics.sh <결과파일이름>
-# k6 시작 직전에 실행하고 끝나면 Ctrl+C.
+# 자원 사용률 수집:  ~/metrics.sh <결과파일이름>   (before.sh 가 띄우고 after.sh 가 죽인다)
 mkdir -p ~/results
 OUT=~/results/metrics-${1:-result}.txt
+: > "$OUT"
 
-echo "▶ 수집 시작 → $OUT   (Ctrl+C 로 중단)"
 while true; do
-	m=$(curl -s localhost:8080/actuator/prometheus \
+	# 0.2초 간격: 빠른 방식은 8초에 끝나 1초로는 포화 구간 표본이 부족하다.
+	m=$(curl -s --max-time 1 localhost:19090/actuator/prometheus \
 		| grep -E '^(hikaricp_connections_active|hikaricp_connections_pending|hikaricp_connections_max|tomcat_threads_busy|tomcat_threads_current)' \
 		| awk '{printf "%s=%s ", $1, $2}')
-	echo "$(date +%s) $m" >> "$OUT"
-	sleep 1
+	[ -n "$m" ] && echo "$(date +%s.%N) $m" >> "$OUT"
+	sleep 0.2
 done
 SH
 
@@ -152,7 +160,7 @@ cat > "$HOME/drain.sh" <<'SH'
 # 부하 종료 후 판정 전에 실행. k6 가 타임아웃으로 포기해도 서버는 계속 처리하므로,
 # 발급 행 수가 멈출 때까지 기다린 뒤 세야 실제 발급 수가 나온다.
 cd ~/load-test
-Q() { docker exec coupon-mysql mysql -N -B -ucoupon -pcoupon1234 coupon -e "$1" 2>/dev/null; }
+Q() { sudo docker exec coupon-mysql mysql -N -B -ucoupon -pcoupon1234 coupon -e "$1" 2>/dev/null; }
 PREV=-1; STABLE=0
 for i in $(seq 1 36); do
 	N=$(Q "SELECT COUNT(*) FROM coupon_issue WHERE coupon_id=1")
@@ -164,9 +172,64 @@ done
 echo "▶ 배수 타임아웃: 발급 $PREV"
 SH
 
-chmod +x "$HOME"/drain.sh
-chmod +x "$HOME"/app.sh "$HOME"/reset.sh "$HOME"/verify.sh "$HOME"/metrics.sh "$HOME"/dbstat.sh
-echo "   ~/app.sh  ~/reset.sh  ~/verify.sh  ~/metrics.sh  ~/dbstat.sh 생성함"
+cat > "$HOME/netstat.sh" <<'SH'
+#!/usr/bin/env bash
+# 커널이 버린 연결 수:  ~/netstat.sh
+# ListenOverflows = accept 큐 넘침 · ListenDrops = 그 외
+awk '/^TcpExt:/{
+  if(!h){for(i=2;i<=NF;i++)k[i]=$i; h=1; next}
+  for(i=2;i<=NF;i++) if(k[i]=="ListenOverflows"||k[i]=="ListenDrops") printf "%s=%s ", k[i], $i
+  print ""
+}' /proc/net/netstat
+SH
+
+cat > "$HOME/before.sh" <<'SH'
+#!/usr/bin/env bash
+# 부하 직전:  ~/before.sh <이름> [redis]   초기화 + 사전 지표 + 모니터 기동
+set -e
+N=$1
+mkdir -p ~/results
+~/reset.sh ${2:-} >/dev/null 2>&1
+echo "=== dbstat BEFORE ==="; ~/dbstat.sh 2>/dev/null | grep -v Warning
+echo "=== netstat BEFORE ==="; ~/netstat.sh
+pkill -f metrics.sh 2>/dev/null || true
+pkill -f "vmstat 1" 2>/dev/null || true
+pkill -f "sport = :8080" 2>/dev/null || true
+nohup ~/metrics.sh "$N" >/dev/null 2>&1 &
+nohup vmstat 1 > ~/results/vmstat-$N.txt 2>&1 &
+# accept 큐에 쌓인 연결 수(Recv-Q)
+nohup bash -c 'while true; do ss -ltn "sport = :8080" | awk "NR>1{print \$2}"; sleep 0.2; done' > ~/results/qdepth-$N.txt 2>&1 &
+echo "▶ 모니터 기동: metrics · vmstat · qdepth"
+SH
+
+cat > "$HOME/after.sh" <<'SH'
+#!/usr/bin/env bash
+# 배수 완료 후:  ~/after.sh <이름>   모니터 중지 + 사후 지표 + 판정
+set -e
+N=$1
+pkill -f metrics.sh 2>/dev/null || true
+pkill -f "vmstat 1" 2>/dev/null || true
+pkill -f "sport = :8080" 2>/dev/null || true
+sleep 1
+echo "=== dbstat AFTER ==="; ~/dbstat.sh 2>/dev/null | grep -v Warning
+echo "=== netstat AFTER ==="; ~/netstat.sh
+echo "=== verify ==="; ~/verify.sh 2>/dev/null | grep -v Warning
+echo "=== metrics 최대값 ==="
+# 지표 이름에 = 가 들어 있어 줄 끝의 =숫자 만 값으로 본다.
+awk '{for(i=2;i<=NF;i++){t=$i; if(match(t,/=[0-9.]+$/)){k=substr(t,1,RSTART-1); v=substr(t,RSTART+1)+0; sub(/[{].*/,"",k); if(v>m[k])m[k]=v}}}
+     END{for(k in m) printf "  %-32s %s\n", k, m[k]}' ~/results/metrics-$N.txt | sort
+echo "=== CPU/RAM ==="
+# free 는 캐시를 뺀 값이라 낮게 보인다. 부족 판단은 swap 으로 한다.
+awk 'NR>2 && $13+0==$13 {n++; us+=$13; sy+=$14; id+=$15; wa+=$16; if($4<mf||n==1)mf=$4; si+=$7; so+=$8}
+     END{if(n)printf "  CPU us=%.1f%% sy=%.1f%% id=%.1f%% wa=%.1f%% · free 최저 %.1fGB · swap %d/%d\n", us/n, sy/n, id/n, wa/n, mf/1048576, si, so}' ~/results/vmstat-$N.txt
+echo "=== accept 큐 최대 깊이 ==="
+sort -n ~/results/qdepth-$N.txt | tail -1
+SH
+
+chmod +x "$HOME"/app.sh "$HOME"/stop.sh "$HOME"/reset.sh "$HOME"/verify.sh \
+	"$HOME"/metrics.sh "$HOME"/dbstat.sh "$HOME"/netstat.sh \
+	"$HOME"/before.sh "$HOME"/drain.sh "$HOME"/after.sh
+echo "   ~/app.sh ~/before.sh ~/drain.sh ~/after.sh ~/stop.sh 생성함"
 
 echo "▶ [5/6] MySQL / Redis"
 cd "$REPO"
