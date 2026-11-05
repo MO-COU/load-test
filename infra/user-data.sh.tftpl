@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# 부팅 때 root 로 한 번 돈다. 세팅은 저장소 스크립트가 하고, 여기서는 그 스크립트를 ubuntu 사용자로 부른다.
+set -euxo pipefail
+exec > >(tee /var/log/load-test-setup.log) 2>&1
+
+# 부팅 직후 unattended-upgrades 가 apt 잠금을 잡고 있어 세팅 스크립트의 apt-get 이 실패할 수 있다.
+echo 'DPkg::Lock::Timeout "600";' > /etc/apt/apt.conf.d/99-lock-timeout
+
+apt-get update -qq
+apt-get install -y git
+# 결과를 S3 로 올리는 데 쓴다.
+snap install aws-cli --classic
+
+sudo -u ubuntu -H bash -c 'cd ~ && git clone ${repo_url} && bash load-test/scripts/${setup_script} ${setup_args}'
+
+touch /var/lib/load-test-ready
