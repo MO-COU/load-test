@@ -64,14 +64,25 @@ POST /issue?couponId=1&memberId=100
 
 ## 통일 조건
 
-`application.yaml` 에 있다. 임의로 바꾸면 비교가 성립하지 않는다.
+`main` 의 `application.yaml` 기본값이다. 임의로 바꾸면 비교가 성립하지 않는다.
+`exp/*` 브랜치는 이 값이 정해지기 전에 갈라져 기본값이 다르다(커넥션 풀 50,
+accept-count 100, 관리 포트 없음). 그래서 `~/app.sh` 가 환경변수로 같은 값을 넣고 띄운다.
 
 ```
-커넥션 풀        16        HikariCP 권장식 (코어 수 × 2) + 디스크 수
-워커 스레드      200       Tomcat 기본값
-max-connections  30,000    2만 연결을 다 받기 위한 값. 실무 권장값이 아니다
-accept-count     32768     2만 개 동시 도착을 흡수. 기본값 100 으로는 연결이 버려진다
+커넥션 풀           16        vCPU 8 × 2. HikariCP 권장식은 물리 코어 기준(c5.2xlarge 4코어 → 9)
+워커 스레드         200       Tomcat 기본값
+max-connections     30,000    2만 연결을 다 받기 위한 값. 실무 권장값이 아니다
+accept-count        32768     2만 개 동시 도착을 흡수. 기본값 100 으로는 연결이 버려진다
+관리 포트           19090     지표 수집을 메인 커넥터와 분리
+커넥션 대기 상한    10초      Hikari connection-timeout
+Redis 명령 타임아웃 3초       spring.data.redis.timeout
 ```
+
+커넥션 풀은 vCPU 수로 계산한 16을 썼다. 권장식대로라면 9이고, 풀 크기를 바꿔 다시 재지는 않았다.
+
+Redis 클라이언트 풀은 방식마다 다르다. `redis-watch` 는 Lettuce 풀(최대 3000)을
+`application.yaml` 에, `redisson-rlock` 은 Redisson 커넥션 풀(3000)을 `RedissonConfig` 에 둔다.
+`redis-lua` 는 풀 없이 Lettuce 단일 연결을 쓴다. 명령이 한 번(`EVALSHA`)이라 연결을 오래 잡지 않는다.
 
 `accept-count` 는 OS 의 `somaxconn` 보다 크면 조용히 깎이므로 함께 올려야 한다.
 `setup-app.sh` 가 `somaxconn`·`tcp_max_syn_backlog` 를 32768 로 설정한다.
@@ -81,7 +92,7 @@ accept-count     32768     2만 개 동시 도착을 흡수. 기본값 100 으�
 둘 다 낙관적 계열이라 정책이 같아야 서로 비교된다.
 
 ```java
-5회까지 재시도
+최대 5회 시도
 실패할 때마다 Thread.sleep(5 + ThreadLocalRandom.current().nextInt(15));  // 5~19ms
 ```
 
@@ -105,6 +116,14 @@ accept-count     32768     2만 개 동시 도착을 흡수. 기본값 100 으�
 ```bash
 docker compose up -d
 ./gradlew test
+```
+
+3306·6379 를 다른 컨테이너가 이미 쓰고 있으면 호스트 포트를 바꾼다. 테스트가 그 컨테이너에 붙으면
+`@BeforeEach` 가 `coupon:*` 키를 지운다.
+
+```bash
+MYSQL_HOST_PORT=13306 REDIS_HOST_PORT=16379 docker compose up -d
+DB_PORT=13306 REDIS_PORT=16379 ./gradlew test
 ```
 
 `CouponIssueConcurrencyTest` 가 두 가지를 본다.
@@ -188,7 +207,7 @@ sudo apt-get update && sudo apt-get install -y git \
 세팅이 홈에 만드는 스크립트들:
 
 ```
-~/app.sh <브랜치>       브랜치 전환 → 빌드 → 백그라운드 실행
+~/app.sh <브랜치>       이전 앱 중지 → 브랜치 전환 → 빌드 → 통일 조건으로 실행 → 기동 대기
 ~/before.sh <이름> [redis]  초기화 + 사전 지표 + 모니터 기동
 ~/drain.sh              서버가 밀린 요청을 다 소화할 때까지 대기
 ~/after.sh <이름>       모니터 중지 + 사후 지표 + 판정
@@ -226,7 +245,7 @@ sudo apt-get update && sudo apt-get install -y git \
 기다린다(최대 180초).
 
 `before.sh` 는 `metrics`(0.2초 간격)·`vmstat`·accept 큐 깊이를 동시에 수집하고,
-`after.sh` 가 전후 차이와 최대값을 계산해 출력한다.
+`after.sh` 가 사후 지표와 함께 metrics 최대값, CPU 평균·최저 유휴, accept 큐 최대 깊이를 출력한다. 락 대기·INSERT 증가량은 BEFORE·AFTER 값의 차이로 본다.
 
 액추에이터는 관리 포트(19090)로 분리돼 있다. 메인 커넥터가 포화되면
 지표 수집 요청까지 밀려 정작 포화 구간을 못 찍기 때문이다.
@@ -250,7 +269,7 @@ sudo apt-get update && sudo apt-get install -y git \
 
 | 지표 | 출처 | 의미 |
 |---|---|---|
-| `http_req_failed` | k6 요약 | **대표 지표.** 60초 안에 결과를 받지 못한 비율 |
+| `http_req_failed` | k6 요약 | **대표 지표.** `200`·`409` 가 아닌 응답(5xx)과 60초 타임아웃을 합친 비율 |
 | DB 발급 행 수 | `verify.sh` | **대표 지표.** 재고를 다 팔았는가 |
 | 실행 시간 | k6 요약 마지막 줄 | 60초 근처면 타임아웃에 잘린 값이라 그대로 쓰지 않는다 |
 | `p95` | k6 요약 | 사용자 체감. 59.9초면 잘린 값이다 |
