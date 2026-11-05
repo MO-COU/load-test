@@ -69,9 +69,22 @@ cd ~/load-test
 git switch "$1"
 ./gradlew -q clean bootJar
 echo "▶ 브랜치 $(git branch --show-current) / 커밋 $(git rev-parse --short HEAD)"
+~/stop.sh >/dev/null
 ulimit -n 65535
+# 통일 조건. exp/* 브랜치는 application.yaml 기본값이 이 값들로 바뀌기 전에 갈라져
+# 기본값이 다르다(풀 50, accept-count 100, 관리 포트 없음). 환경변수로 같은 값을 넣는다.
+export DB_POOL_SIZE=16 TOMCAT_ACCEPT_COUNT=32768 TOMCAT_MAX_CONNECTIONS=30000 MANAGEMENT_SERVER_PORT=19090
 nohup java -jar build/libs/*.jar > ~/app.log 2>&1 &
 echo "▶ pid $! · 로그 ~/app.log"
+for i in $(seq 1 90); do
+	if curl -sf localhost:19090/actuator/health >/dev/null; then
+		echo "▶ 기동 완료 (${i}초)"
+		exit 0
+	fi
+	sleep 1
+done
+echo "▶ 90초 안에 기동하지 않았다. ~/app.log 를 확인한다"
+exit 1
 SH
 
 cat > "$HOME/stop.sh" <<'SH'
@@ -85,7 +98,7 @@ SH
 cat > "$HOME/reset.sh" <<'SH'
 #!/usr/bin/env bash
 # 성능 측정 직전 초기화:  ~/reset.sh          DB 재고만
-#                          ~/reset.sh redis    Redis 재고까지 (lua / watch / redisson)
+#                          ~/reset.sh redis    Redis 재고까지 (lua / watch)
 #
 set -e
 STOCK=10000
@@ -220,8 +233,9 @@ awk '{for(i=2;i<=NF;i++){t=$i; if(match(t,/=[0-9.]+$/)){k=substr(t,1,RSTART-1); 
      END{for(k in m) printf "  %-32s %s\n", k, m[k]}' ~/results/metrics-$N.txt | sort
 echo "=== CPU/RAM ==="
 # free 는 캐시를 뺀 값이라 낮게 보인다. 부족 판단은 swap 으로 한다.
-awk 'NR>2 && $13+0==$13 {n++; us+=$13; sy+=$14; id+=$15; wa+=$16; if($4<mf||n==1)mf=$4; si+=$7; so+=$8}
-     END{if(n)printf "  CPU us=%.1f%% sy=%.1f%% id=%.1f%% wa=%.1f%% · free 최저 %.1fGB · swap %d/%d\n", us/n, sy/n, id/n, wa/n, mf/1048576, si, so}' ~/results/vmstat-$N.txt
+# 평균은 부하 전후의 유휴 구간까지 포함한다. 부하가 몰린 순간은 id 최저로 본다.
+awk 'NR>2 && $13+0==$13 {n++; us+=$13; sy+=$14; id+=$15; wa+=$16; if($15<mi||n==1)mi=$15; if($4<mf||n==1)mf=$4; si+=$7; so+=$8}
+     END{if(n)printf "  CPU 평균 us=%.1f%% sy=%.1f%% id=%.1f%% wa=%.1f%% · id 최저 %d%% · free 최저 %.1fGB · swap %d/%d\n", us/n, sy/n, id/n, wa/n, mi, mf/1048576, si, so}' ~/results/vmstat-$N.txt
 echo "=== accept 큐 최대 깊이 ==="
 sort -n ~/results/qdepth-$N.txt | tail -1
 SH
