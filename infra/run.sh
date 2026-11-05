@@ -46,7 +46,7 @@ remote() {
 }
 
 echo "▶ $NAME · $BRANCH · 커넥션 풀 $POOL"
-remote "$APP" "~/app.sh $BRANCH $POOL 2>&1 | tee ~/results/app-$NAME.txt"
+remote "$APP" "mkdir -p ~/results && ~/app.sh $BRANCH $POOL 2>&1 | tee ~/results/app-$NAME.txt"
 remote "$APP" "~/before.sh $NAME $REDIS"
 remote "$K6" "~/k6.sh $NAME | tail -45"
 remote "$APP" "~/drain.sh | tee ~/results/drain-$NAME.txt"
