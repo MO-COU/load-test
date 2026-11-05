@@ -63,17 +63,19 @@ echo "▶ [4/6] 저장소 + 실행 스크립트"
 # 저장소 안에 두면 git switch 때 사라지므로 홈에 만든다.
 cat > "$HOME/app.sh" <<'SH'
 #!/usr/bin/env bash
-# 브랜치 전환 → 빌드 → 백그라운드 실행:  ~/app.sh exp/pessimistic-lock
+# 브랜치 전환 → 빌드 → 백그라운드 실행:  ~/app.sh exp/pessimistic-lock [커넥션 풀]
 set -e
+POOL=${2:-16}
 cd ~/load-test
 git switch "$1"
 ./gradlew -q clean bootJar
-echo "▶ 브랜치 $(git branch --show-current) / 커밋 $(git rev-parse --short HEAD)"
+echo "▶ 브랜치 $(git branch --show-current) / 커밋 $(git rev-parse --short HEAD) / 커넥션 풀 $POOL"
 ~/stop.sh >/dev/null
 ulimit -n 65535
 # 통일 조건. exp/* 브랜치는 application.yaml 기본값이 이 값들로 바뀌기 전에 갈라져
 # 기본값이 다르다(풀 50, accept-count 100, 관리 포트 없음). 환경변수로 같은 값을 넣는다.
-export DB_POOL_SIZE=16 TOMCAT_ACCEPT_COUNT=32768 TOMCAT_MAX_CONNECTIONS=30000 MANAGEMENT_SERVER_PORT=19090
+# 커넥션 풀은 풀 크기 비교 때만 두 번째 인자로 바꾼다.
+export DB_POOL_SIZE=$POOL TOMCAT_ACCEPT_COUNT=32768 TOMCAT_MAX_CONNECTIONS=30000 MANAGEMENT_SERVER_PORT=19090
 nohup java -jar build/libs/*.jar > ~/app.log 2>&1 &
 echo "▶ pid $! · 로그 ~/app.log"
 for i in $(seq 1 90); do
@@ -202,14 +204,16 @@ cat > "$HOME/before.sh" <<'SH'
 set -e
 N=$1
 mkdir -p ~/results
+exec > >(tee ~/results/before-$N.txt) 2>&1
 ~/reset.sh ${2:-} >/dev/null 2>&1
 echo "=== dbstat BEFORE ==="; ~/dbstat.sh 2>/dev/null | grep -v Warning
 echo "=== netstat BEFORE ==="; ~/netstat.sh
 pkill -f metrics.sh 2>/dev/null || true
-pkill -f "vmstat 1" 2>/dev/null || true
+pkill -x vmstat 2>/dev/null || true
 pkill -f "sport = :8080" 2>/dev/null || true
 nohup ~/metrics.sh "$N" >/dev/null 2>&1 &
-nohup vmstat 1 > ~/results/vmstat-$N.txt 2>&1 &
+# 시각(-t)을 함께 찍어 부하 구간만 잘라 볼 수 있게 한다.
+nohup vmstat -t 1 > ~/results/vmstat-$N.txt 2>&1 &
 # accept 큐에 쌓인 연결 수(Recv-Q)
 nohup bash -c 'while true; do ss -ltn "sport = :8080" | awk "NR>1{print \$2}"; sleep 0.2; done' > ~/results/qdepth-$N.txt 2>&1 &
 echo "▶ 모니터 기동: metrics · vmstat · qdepth"
@@ -220,8 +224,9 @@ cat > "$HOME/after.sh" <<'SH'
 # 배수 완료 후:  ~/after.sh <이름>   모니터 중지 + 사후 지표 + 판정
 set -e
 N=$1
+exec > >(tee ~/results/after-$N.txt) 2>&1
 pkill -f metrics.sh 2>/dev/null || true
-pkill -f "vmstat 1" 2>/dev/null || true
+pkill -x vmstat 2>/dev/null || true
 pkill -f "sport = :8080" 2>/dev/null || true
 sleep 1
 echo "=== dbstat AFTER ==="; ~/dbstat.sh 2>/dev/null | grep -v Warning

@@ -12,6 +12,12 @@ const issued = new Counter('issued');
 const soldOut = new Counter('sold_out');
 const duplicated = new Counter('duplicated');
 const errors = new Counter('errors');
+// errors 의 구성. 5xx 와 타임아웃은 원인이 달라 나눠 센다.
+const serverErrors = new Counter('server_errors');
+const timeouts = new Counter('timeouts');
+const otherErrors = new Counter('other_errors');
+// 5xx 가 나기까지 걸린 시간. 커넥션 대기 상한(10초)에서 났는지 본다.
+const serverErrorDuration = new Trend('server_error_duration', true);
 // 발급 시각(테스트 시작 기준 ms). max 가 완판 시간, med 가 절반 소진 시점이다.
 const issueElapsed = new Trend('issue_elapsed');
 
@@ -21,6 +27,10 @@ if (!TARGET) {
 }
 
 const VUS = Number(__ENV.VUS || 20000);
+// k6 기본값과 같은 60초. 버전이 바뀌어도 조건이 바뀌지 않게 적어 둔다.
+const TIMEOUT = __ENV.TIMEOUT || '60s';
+// k6 의 요청 타임아웃 오류 코드.
+const REQUEST_TIMEOUT = 1050;
 
 http.setResponseCallback(http.expectedStatuses(200, 409));
 
@@ -50,7 +60,7 @@ export default function (data) {
       `${TARGET}/issue?couponId=1&memberId=${memberId}`,
       null,
       // 태그가 없으면 k6 가 URL 마다 메트릭을 만들어 스스로 병목이 된다. 지우지 말 것.
-      { tags: { name: 'issue' } }
+      { tags: { name: 'issue' }, timeout: TIMEOUT }
   );
 
   if (res.status === 200) {
@@ -63,7 +73,15 @@ export default function (data) {
       soldOut.add(1);
     }
   } else {
-    // 5xx 또는 타임아웃. 사용자는 끝내 결과를 받지 못했다.
+    // 사용자는 끝내 결과를 받지 못했다.
     errors.add(1);
+    if (res.status >= 500) {
+      serverErrors.add(1);
+      serverErrorDuration.add(res.timings.duration);
+    } else if (res.error_code === REQUEST_TIMEOUT) {
+      timeouts.add(1);
+    } else {
+      otherErrors.add(1);
+    }
   }
 }

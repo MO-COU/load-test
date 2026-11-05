@@ -74,11 +74,16 @@ SH
 
 cd ~/load-test
 mkdir -p ~/results
-OUT=~/results/${1:-result}.txt
+N=${1:-result}
+OUT=~/results/$N.txt
+ulimit -n 65535
 
-k6 run load-test/rush-spike.js 2>&1 | tee "$OUT"
+# 시작·종료 시각은 앱 서버 vmstat 에서 부하 구간을 잘라 낼 때 쓴다.
+echo "start $(date +%s.%N)" > ~/results/$N-time.txt
+k6 run --summary-export ~/results/$N.json load-test/rush-spike.js 2>&1 | tee "$OUT"
+echo "end $(date +%s.%N)" >> ~/results/$N-time.txt
 echo
-echo "▶ 저장됨: $OUT"
+echo "▶ 저장됨: $OUT · ~/results/$N.json"
 SH
 	chmod +x "$HOME/k6.sh"
 	echo "   ~/k6.sh 생성함 (TARGET=http://${APP_IP}:8080)"
