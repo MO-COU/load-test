@@ -44,8 +44,9 @@ command -v git >/dev/null || sudo apt-get install -y git
 if command -v k6 >/dev/null; then
 	echo "   k6 이미 설치됨 ($(k6 version))"
 else
-	# --keyserver 는 dirmngr 이 받는다. gpg 만 있고 dirmngr 이 없는 이미지가 있다.
-	command -v dirmngr >/dev/null || sudo apt-get install -y gnupg dirmngr
+	command -v gpg >/dev/null || sudo apt-get install -y gnupg
+	# root 의 ~/.gnupg 가 없으면 dirmngr 을 띄우지 못해 키 수신이 "No dirmngr" 로 실패한다. 먼저 만든다.
+	sudo gpg -k >/dev/null
 	sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
 		--keyserver hkp://keyserver.ubuntu.com:80 \
 		--recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
