@@ -1,6 +1,6 @@
 # 측정 결과 상세
 
-2026-11-05 측정. 조건과 절차는 [CONTRIBUTING.md](../CONTRIBUTING.md) 참고. 원자료는 [results/2026-11](../results/2026-11) 에 있다.
+2026-11-05 측정. 조건과 절차는 [CONTRIBUTING.md](../CONTRIBUTING.md) 참고. 원자료는 [results](../results) 에 있다.
 
 ```
 부하    회원 20,000명이 1인 1요청으로 동시 출발 (k6 per-vu-iterations)
@@ -201,7 +201,7 @@ DB 판정 4방식을 풀 9 로도 2회씩 쟀다. 같은 서버에서 방식마�
 
 ## 회차별 값
 
-위 표의 범위가 나온 원값이다. `python3 scripts/summarize.py results/2026-11` 의 출력이다.
+위 표의 범위가 나온 원값이다. `python3 scripts/summarize.py results` 의 출력이다.
 
 | 회차 | 풀 | 실행 | k6 발급 | DB 발급 | 실패율 | 5xx | 타임아웃 | 5xx 중앙값 | p95 | active | pending | 부하 구간 CPU us | 유휴 평균 | 유휴 최저 | accept 큐 최대 | insert | rollback | update | 락 대기 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|

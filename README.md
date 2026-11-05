@@ -124,7 +124,7 @@ coupon.issued_count UPDATE   같은 행이라 여기서 직렬화된다
 2026-08-31 측정과 비교하면 순위와 완판 여부는 같고, 실패율은 2회 평균으로 0-4%p 높다
 (`lua` 0, `watch` +1.0, `optimistic` +1.6, `atomic` +3.5, `redisson` +3.5, `pessimistic` +3.9).
 방식별 상세 수치, 회차별 값, 이전 측정은 [docs/results.md](docs/results.md) 에,
-원자료는 [results/2026-11](results/2026-11) 에 있다.
+원자료는 [results](results) 에 있다.
 
 ### 5.1 커넥션 풀 9
 
@@ -279,5 +279,5 @@ Redis 사용 여부가 아니라 **무엇을 Redis 로 옮겼는가**가 갈랐�
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) — 작업 범위·통일 조건·측정 절차
 - [docs/results.md](docs/results.md) — 방식별 상세 수치와 해석, 회차별 값, 이전 측정
-- [results/2026-11](results/2026-11) — 측정 원자료. `python3 scripts/summarize.py results/2026-11` 이 회차별 표를 만든다
+- [results](results) — 측정 원자료. `python3 scripts/summarize.py results` 가 회차별 표를 만든다
 - [infra/](infra) — 측정 서버 Terraform 과 SSM 측정 스크립트

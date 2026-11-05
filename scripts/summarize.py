@@ -1,6 +1,6 @@
 """측정 원자료에서 회차별 값을 뽑는다.
 
-    python3 scripts/summarize.py results/2026-11
+    python3 scripts/summarize.py results
 
 docs/results.md 의 회차별 표가 이 출력이다.
 """

@@ -200,7 +200,7 @@ terraform apply                      # 두 서버에 /var/lib/load-test-ready �
 
 ./run.sh pess-16-1 exp/pessimistic-lock        # 측정 1회 = 아래 측정 절차 전체
 ./run.sh lua-16-1 exp/redis-lua 16 redis       # [커넥션 풀] [redis]
-./collect.sh ../results/2026-11                # 두 서버의 ~/results 를 S3 를 거쳐 받는다
+./collect.sh ../results                        # 두 서버의 ~/results 를 S3 를 거쳐 받는다
 
 terraform destroy                    # 결과 버킷까지 지운다
 ```
@@ -327,11 +327,11 @@ k6 서버   <이름>.txt         k6 화면 출력
 `docs/results.md` 에 기존 방식과 같은 형식으로 남긴다.
 k6 요약, `dbstat` 전후 차이, `metrics` 포화 지점, `verify` 판정을 함께 적는다.
 
-원자료는 `results/<연-월>/` 에 `app/`·`k6/` 로 나눠 둔다. k6 화면 출력은 타임아웃마다 경고가 한 줄씩 찍혀
+원자료는 `results/` 에 `app/`·`k6/` 로 나눠 둔다. k6 화면 출력은 타임아웃마다 경고가 한 줄씩 찍혀
 타임아웃이 많은 회차는 2MB 가까이 되므로 gzip 으로 압축한다. 회차별 표는 원자료에서 만든다.
 
 ```bash
-python3 scripts/summarize.py results/2026-11
+python3 scripts/summarize.py results
 ```
 
 ## 커밋
