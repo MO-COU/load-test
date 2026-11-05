@@ -212,7 +212,9 @@ Redis 사용 여부가 아니라 **무엇을 Redis 로 옮겼는가**가 갈랐�
 - `coupon_issue` 가 빈 상태에서 시작한다. 이력이 쌓이면 INSERT 비용이 늘어
   절대 수치는 달라진다.
 - `lua` 도 DB 쓰기가 요청 경로에 남아 풀 대기가 184 까지 갔다. 다만 10초 안에
-  끝나 지속되지 않았다. 완전히 풀려면 쓰기 비동기화가 다음 단계다.
+  끝나 지속되지 않았다. 완전히 풀려면 쓰기 비동기화가 다음 단계다. 동기·비동기 적재 비교는
+  조현빈이 [`exp/large-db-sync-vs-async`](https://github.com/MO-COU/load-test/tree/exp/large-db-sync-vs-async/docs/benchmark-results/sync-vs-async)에서
+  쟀고, [backend](https://github.com/MO-COU/backend)의 최종 구조는 Redis Stream 비동기 적재다.
 
 ## 9. 구현과 측정
 
