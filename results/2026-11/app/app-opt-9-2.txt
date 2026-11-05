@@ -1,0 +1,6 @@
+Already on 'exp/optimistic'
+M	gradlew.bat
+Your branch is up to date with 'origin/exp/optimistic'.
+▶ 브랜치 exp/optimistic / 커밋 99d74b2 / 커넥션 풀 9
+▶ pid 133447 · 로그 ~/app.log
+▶ 기동 완료 (8초)

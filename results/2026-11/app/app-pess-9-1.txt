@@ -1,0 +1,6 @@
+Already on 'exp/pessimistic-lock'
+M	gradlew.bat
+Your branch is up to date with 'origin/exp/pessimistic-lock'.
+▶ 브랜치 exp/pessimistic-lock / 커밋 05ce876 / 커넥션 풀 9
+▶ pid 71681 · 로그 ~/app.log
+▶ 기동 완료 (7초)

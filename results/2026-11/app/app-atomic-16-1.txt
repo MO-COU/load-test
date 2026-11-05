@@ -1,0 +1,6 @@
+Switched to a new branch 'exp/atomic-update'
+M	gradlew.bat
+branch 'exp/atomic-update' set up to track 'origin/exp/atomic-update'.
+▶ 브랜치 exp/atomic-update / 커밋 58497c3 / 커넥션 풀 16
+▶ pid 43306 · 로그 ~/app.log
+▶ 기동 완료 (8초)

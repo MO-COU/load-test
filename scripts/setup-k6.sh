@@ -80,7 +80,7 @@ N=${1:-result}
 OUT=~/results/$N.txt
 ulimit -n 65535
 
-# 시작·종료 시각은 앱 서버 vmstat 에서 부하 구간을 잘라 낼 때 쓴다.
+# 종료 시각과 k6 실행 시간으로 앱 서버 vmstat 에서 부하 구간을 잘라 낸다.
 echo "start $(date +%s.%N)" > ~/results/$N-time.txt
 k6 run --summary-export ~/results/$N.json load-test/rush-spike.js 2>&1 | tee "$OUT"
 echo "end $(date +%s.%N)" >> ~/results/$N-time.txt

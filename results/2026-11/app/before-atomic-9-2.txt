@@ -1,0 +1,11 @@
+=== dbstat BEFORE ===
+Variable_name	Value
+Com_insert	63001
+Com_rollback	30000
+Com_update	60018
+Innodb_row_lock_current_waits	0
+Innodb_row_lock_time_avg	45
+Innodb_row_lock_waits	59997
+=== netstat BEFORE ===
+ListenOverflows=0 ListenDrops=0 
+▶ 모니터 기동: metrics · vmstat · qdepth

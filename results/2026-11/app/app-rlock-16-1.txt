@@ -1,0 +1,6 @@
+Switched to a new branch 'exp/redisson-rlock'
+M	gradlew.bat
+branch 'exp/redisson-rlock' set up to track 'origin/exp/redisson-rlock'.
+▶ 브랜치 exp/redisson-rlock / 커밋 ee59ae9 / 커넥션 풀 16
+▶ pid 89186 · 로그 ~/app.log
+▶ 기동 완료 (8초)

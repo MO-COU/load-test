@@ -1,0 +1,6 @@
+Already on 'exp/redis-watch'
+M	gradlew.bat
+Your branch is up to date with 'origin/exp/redis-watch'.
+▶ 브랜치 exp/redis-watch / 커밋 ea732f2 / 커넥션 풀 16
+▶ pid 40189 · 로그 ~/app.log
+▶ 기동 완료 (7초)

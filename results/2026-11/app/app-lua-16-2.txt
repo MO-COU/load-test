@@ -1,0 +1,6 @@
+Already on 'exp/redis-lua'
+M	gradlew.bat
+Your branch is up to date with 'origin/exp/redis-lua'.
+▶ 브랜치 exp/redis-lua / 커밋 9387415 / 커넥션 풀 16
+▶ pid 34206 · 로그 ~/app.log
+▶ 기동 완료 (8초)

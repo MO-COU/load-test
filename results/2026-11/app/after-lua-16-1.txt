@@ -1,0 +1,24 @@
+=== dbstat AFTER ===
+Variable_name	Value
+Com_insert	20000
+Com_rollback	0
+Com_update	4
+Innodb_row_lock_current_waits	0
+Innodb_row_lock_time_avg	0
+Innodb_row_lock_waits	0
+=== netstat AFTER ===
+ListenOverflows=0 ListenDrops=0 
+=== verify ===
+stock	counter	issued_rows	dup_members	oversell	counter_ok	duplicate	redis_expect
+10000	0	10000	0	PASS	N/A	PASS	0
+재고누수  PASS  (발급 10000 + 남은재고 0 = 10000)
+=== metrics 최대값 ===
+  hikaricp_connections_active      16
+  hikaricp_connections_max         16
+  hikaricp_connections_pending     184
+  tomcat_threads_busy_threads      200
+  tomcat_threads_current_threads   200
+=== CPU/RAM ===
+  CPU 평균 us=22.6% sy=5.8% id=69.1% wa=2.3% · id 최저 5% · free 최저 8.6GB · swap 0/0
+=== accept 큐 최대 깊이 ===
+13315

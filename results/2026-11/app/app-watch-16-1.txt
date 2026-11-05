@@ -1,0 +1,6 @@
+Switched to a new branch 'exp/redis-watch'
+M	gradlew.bat
+branch 'exp/redis-watch' set up to track 'origin/exp/redis-watch'.
+▶ 브랜치 exp/redis-watch / 커밋 ea732f2 / 커넥션 풀 16
+▶ pid 37029 · 로그 ~/app.log
+▶ 기동 완료 (7초)

@@ -1,0 +1,6 @@
+Switched to a new branch 'exp/optimistic'
+M	gradlew.bat
+branch 'exp/optimistic' set up to track 'origin/exp/optimistic'.
+▶ 브랜치 exp/optimistic / 커밋 99d74b2 / 커넥션 풀 16
+▶ pid 116095 · 로그 ~/app.log
+▶ 기동 완료 (7초)

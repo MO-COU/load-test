@@ -1,0 +1,6 @@
+Switched to a new branch 'exp/pessimistic-lock'
+M	gradlew.bat
+branch 'exp/pessimistic-lock' set up to track 'origin/exp/pessimistic-lock'.
+▶ 브랜치 exp/pessimistic-lock / 커밋 05ce876 / 커넥션 풀 16
+▶ pid 66014 · 로그 ~/app.log
+▶ 기동 완료 (8초)
