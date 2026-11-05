@@ -1,10 +1,9 @@
 // EC2 성능 측정용 — 동시 몰림 시나리오. 정합성은 CouponIssueConcurrencyTest 담당이다.
 //
-//   ~/k6.sh <결과파일이름> spike
+//   ~/k6.sh <결과파일이름>
 //
 // 회원 20,000명이 재고 10,000장을 두고 동시에 신청한다.
 // 1인 1요청이라 방식과 무관하게 부하량이 20,000건으로 고정된다.
-// (rush-remote.js 는 램프업 60초 조건을 지킨 지속 부하 측정이다. 둘은 다른 것을 잰다.)
 
 import http from 'k6/http';
 import { Counter, Trend } from 'k6/metrics';
@@ -33,7 +32,7 @@ export const options = {
       executor: 'per-vu-iterations',
       vus: VUS,
       iterations: 1,
-      maxDuration: '300s',   // 느린 방식(pessimistic 369 req/s)도 끝낼 수 있게
+      maxDuration: '300s',   // 60초 타임아웃에 걸리는 방식도 전 VU 가 끝날 수 있게
     },
   },
 };

@@ -31,7 +31,7 @@ class CouponIssueConcurrencyTest {
 	private static final long COUPON_ID = 1L;
 	private static final int STOCK = 1000;
 	private static final int MEMBER_POOL = 2000;  // 재고보다 많아야 품절이 발생한다
-	private static final int THREADS = 100;       // 커넥션 풀(50)보다 커야 경합이 유지된다
+	private static final int THREADS = 100;       // 커넥션 풀(16)보다 커야 경합이 유지된다
 	private static final int CLIENT_RETRY = 300;  // 서버가 포기하면 사용자가 다시 누르듯 재호출
 
 	private final String stockKey = "coupon:stock:" + COUPON_ID;
