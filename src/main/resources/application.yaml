@@ -8,7 +8,7 @@ spring:
     password: ${DB_PASSWORD:coupon1234}
     hikari:
       # 통일 사항. 브랜치별로 바꾸면 비교가 성립하지 않는다.
-      # HikariCP 권장식 (코어 8 × 2). 코어보다 많은 커넥션은 DB 안에서 경쟁만 늘린다.
+      # vCPU 8 × 2. HikariCP 권장식은 물리 코어 기준이라 c5.2xlarge(4코어)에서 8-9 다.
       maximum-pool-size: ${DB_POOL_SIZE:16}
       connection-timeout: ${DB_CONNECTION_TIMEOUT:10000}
 

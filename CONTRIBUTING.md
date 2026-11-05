@@ -69,7 +69,7 @@ POST /issue?couponId=1&memberId=100
 accept-count 100, 관리 포트 없음). 그래서 `~/app.sh` 가 환경변수로 같은 값을 넣고 띄운다.
 
 ```
-커넥션 풀           16        vCPU 8 × 2. HikariCP 권장식은 물리 코어 기준(c5.2xlarge 4코어 → 9)
+커넥션 풀           16        vCPU 8 × 2. HikariCP 권장식은 물리 코어 기준(c5.2xlarge 4코어 → 8-9)
 워커 스레드         200       Tomcat 기본값
 max-connections     30,000    2만 연결을 다 받기 위한 값. 실무 권장값이 아니다
 accept-count        32768     2만 개 동시 도착을 흡수. 기본값 100 으로는 연결이 버려진다
@@ -78,7 +78,7 @@ accept-count        32768     2만 개 동시 도착을 흡수. 기본값 100 �
 Redis 명령 타임아웃 3초       spring.data.redis.timeout
 ```
 
-커넥션 풀은 vCPU 수로 계산한 16을 썼다. 권장식대로라면 9이고, 풀 크기를 바꿔 다시 재지는 않았다.
+커넥션 풀은 vCPU 수로 계산한 16을 썼다. 권장식대로라면 8-9이며, 9로 잰 결과는 [README 5.1](README.md#51-커넥션-풀-9)에 있다.
 
 Redis 클라이언트 풀은 방식마다 다르다. `redis-watch` 는 Lettuce 풀(최대 3000)을
 `application.yaml` 에, `redisson-rlock` 은 Redisson 커넥션 풀(3000)을 `RedissonConfig` 에 둔다.
@@ -188,7 +188,26 @@ assertThat(redisTemplate.opsForSet().size(issuedKey)).isEqualTo((long) STOCK);
 └──────────────┘               └───────────────────────┘
 ```
 
-### 세팅 (최초 1회)
+### 세팅 — Terraform
+
+`infra/` 가 두 서버를 같은 서브넷에 띄우고 user_data 로 아래 세팅 스크립트를 부른다.
+접속은 SSM 으로만 하고, 측정 절차도 SSM 으로 보낸다.
+
+```bash
+cd infra
+terraform init
+terraform apply                      # 두 서버에 /var/lib/load-test-ready 가 생기면 세팅 끝
+
+./run.sh pess-16-1 exp/pessimistic-lock        # 측정 1회 = 아래 측정 절차 전체
+./run.sh lua-16-1 exp/redis-lua 16 redis       # [커넥션 풀] [redis]
+./collect.sh ../results/2026-11                # 두 서버의 ~/results 를 S3 를 거쳐 받는다
+
+terraform destroy                    # 결과 버킷까지 지운다
+```
+
+AWS 자격 증명과 EC2·IAM·S3·SSM 권한이 필요하다. 상태 파일은 로컬에 남는다.
+
+### 세팅 — 직접 (최초 1회)
 
 ```bash
 # 앱 서버
@@ -207,7 +226,7 @@ sudo apt-get update && sudo apt-get install -y git \
 세팅이 홈에 만드는 스크립트들:
 
 ```
-~/app.sh <브랜치>       이전 앱 중지 → 브랜치 전환 → 빌드 → 통일 조건으로 실행 → 기동 대기
+~/app.sh <브랜치> [풀]  이전 앱 중지 → 브랜치 전환 → 빌드 → 통일 조건으로 실행 → 기동 대기 (풀 기본 16)
 ~/before.sh <이름> [redis]  초기화 + 사전 지표 + 모니터 기동
 ~/drain.sh              서버가 밀린 요청을 다 소화할 때까지 대기
 ~/after.sh <이름>       모니터 중지 + 사후 지표 + 판정
@@ -222,7 +241,16 @@ sudo apt-get update && sudo apt-get install -y git \
 
 ### 측정 절차
 
-`<이름>` 은 자유롭게 정한다. 결과가 `~/results/<이름>.txt` 로 저장된다.
+`<이름>` 은 자유롭게 정한다. 결과는 두 서버의 `~/results/` 에 남는다.
+
+```
+k6 서버   <이름>.txt         k6 화면 출력
+          <이름>.json        k6 요약 (실패 구성 server_errors·timeouts·other_errors 포함)
+          <이름>-time.txt    부하 시작·종료 시각
+앱 서버   before-·after-<이름>.txt   사전·사후 지표와 판정
+          drain-<이름>.txt           배수 후 DB 발급 수
+          metrics-·vmstat-·qdepth-<이름>.txt   0.2초·1초 간격 기록
+```
 
 ```bash
 # ── 앱 서버 ──
@@ -246,6 +274,7 @@ sudo apt-get update && sudo apt-get install -y git \
 
 `before.sh` 는 `metrics`(0.2초 간격)·`vmstat`·accept 큐 깊이를 동시에 수집하고,
 `after.sh` 가 사후 지표와 함께 metrics 최대값, CPU 평균·최저 유휴, accept 큐 최대 깊이를 출력한다. 락 대기·INSERT 증가량은 BEFORE·AFTER 값의 차이로 본다.
+`after.sh` 의 CPU 평균은 부하 전후의 유휴 구간을 포함한다. 부하 구간만의 CPU 는 k6 종료 시각에서 실행 시간만큼 거슬러 올라간 구간의 vmstat 으로 본다(`scripts/summarize.py`).
 
 액추에이터는 관리 포트(19090)로 분리돼 있다. 메인 커넥터가 포화되면
 지표 수집 요청까지 밀려 정작 포화 구간을 못 찍기 때문이다.
@@ -269,7 +298,9 @@ sudo apt-get update && sudo apt-get install -y git \
 
 | 지표 | 출처 | 의미 |
 |---|---|---|
-| `http_req_failed` | k6 요약 | **대표 지표.** `200`·`409` 가 아닌 응답(5xx)과 60초 타임아웃을 합친 비율 |
+| `http_req_failed` | k6 요약 | **대표 지표.** `200`·`409` 를 받지 못한 요청의 비율 |
+| `server_errors`·`timeouts` | k6 요약 | 실패의 구성. 서버가 5xx 로 돌려보냈는가, 60초 안에 답이 오지 않았는가 |
+| `server_error_duration` | k6 요약 | 5xx 가 나기까지 걸린 시간 |
 | DB 발급 행 수 | `verify.sh` | **대표 지표.** 재고를 다 팔았는가 |
 | 실행 시간 | k6 요약 마지막 줄 | 60초 근처면 타임아웃에 잘린 값이라 그대로 쓰지 않는다 |
 | `p95` | k6 요약 | 사용자 체감. 59.9초면 잘린 값이다 |
@@ -295,6 +326,13 @@ sudo apt-get update && sudo apt-get install -y git \
 
 `docs/results.md` 에 기존 방식과 같은 형식으로 남긴다.
 k6 요약, `dbstat` 전후 차이, `metrics` 포화 지점, `verify` 판정을 함께 적는다.
+
+원자료는 `results/<연-월>/` 에 `app/`·`k6/` 로 나눠 둔다. k6 화면 출력은 타임아웃마다 경고가 한 줄씩 찍혀
+타임아웃이 많은 회차는 2MB 가까이 되므로 gzip 으로 압축한다. 회차별 표는 원자료에서 만든다.
+
+```bash
+python3 scripts/summarize.py results/2026-11
+```
 
 ## 커밋
 
