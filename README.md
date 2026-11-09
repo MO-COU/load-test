@@ -257,23 +257,19 @@ Redis 사용 여부가 아니라 **무엇을 Redis 로 옮겼는가**가 갈랐�
 - `coupon_issue` 가 빈 상태에서 시작한다. 이력이 쌓이면 INSERT 비용이 늘어
   절대 수치는 달라진다.
 - `lua` 도 DB 쓰기가 요청 경로에 남아 풀 대기가 184 까지 갔다. 다만 12초 안에
-  끝나 지속되지 않았다. 완전히 풀려면 쓰기 비동기화가 다음 단계다. 동기·비동기 적재 비교는
-  조현빈이 [`exp/large-db-sync-vs-async`](https://github.com/MO-COU/load-test/tree/exp/large-db-sync-vs-async/docs/benchmark-results/sync-vs-async)에서
-  쟀고, [backend](https://github.com/MO-COU/backend)의 최종 구조는 Redis Stream 비동기 적재다.
+  끝나 지속되지 않았다. 완전히 풀려면 쓰기 비동기화가 다음 단계다.
+  [backend](https://github.com/MO-COU/backend)의 최종 구조는 Redis Stream 비동기 적재다.
 
-## 9. 구현과 측정
+## 9. 팀원
 
-| 브랜치 | 구현 |
+| 이름 | 주요 담당 |
 |---|---|
-| `pessimistic-lock` | 장근창 |
-| `optimistic` | 권도하 |
-| `atomic-update` | 권혁준 |
-| `redisson-rlock` | 박서희 |
-| `redis-watch` | 조현빈 |
-| `redis-lua` | 지창민 |
-
-실험 설계, 공통 기준(`main`), 측정 스크립트, 측정과 분석은 장근창이 맡았다.
-`optimistic` 의 백오프를 `redis-watch` 와 맞추고 `redis-lua` 의 Redis 단언을 더한 것도 같다.
+| 장근창 | 실험 설계, 측정 환경 구성, 측정·분석, `pessimistic-lock` 구현 |
+| 권도하 | `optimistic` 구현 |
+| 권혁준 | `atomic-update` 구현 |
+| 박서희 | `redisson-rlock` 구현 |
+| 조현빈 | `redis-watch` 구현 |
+| 지창민 | `redis-lua` 구현 |
 
 ## 10. 문서
 
